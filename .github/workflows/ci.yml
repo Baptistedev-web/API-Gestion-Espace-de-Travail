@@ -53,6 +53,13 @@ jobs:
           APP_ENV: test
         run: php bin/console doctrine:database:create --if-not-exists --env=test
 
+      - name: Check for migrations
+        run: |
+          if [ -z "$(ls -A migrations/)" ]; then
+            echo "No migrations found, skipping migration step.";
+            exit 0;
+          fi
+
       - name: Run database migrations
         env:
           APP_ENV: test
