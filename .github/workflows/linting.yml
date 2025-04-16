@@ -13,6 +13,20 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
 
+    services:
+      db:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: Symfony_EspaceTravailAPI_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     env:
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI_test
 
@@ -28,6 +42,16 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Create database
+        env:
+          APP_ENV: test
+        run: php bin/console doctrine:database:create --if-not-exists --env=test
+
+      - name: Run database migrations
+        env:
+          APP_ENV: test
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --level=max src/

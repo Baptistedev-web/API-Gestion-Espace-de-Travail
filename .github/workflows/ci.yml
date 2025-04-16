@@ -26,6 +26,8 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI_test
 
     steps:
       - name: Checkout code
@@ -40,6 +42,11 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Clear Symfony cache
+        env:
+          APP_ENV: test
+        run: php bin/console cache:clear --env=test
 
       - name: Create database
         env:
