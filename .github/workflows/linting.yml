@@ -30,16 +30,12 @@ jobs:
     env:
       APP_ENV: test
       APP_SECRET: $ecretf0rt3st
-      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI_test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI
       JWT_SECRET_KEY: config/jwt/private.pem
       JWT_PUBLIC_KEY: config/jwt/public.pem
       JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
 
     steps:
-      - name: Debug secrets
-        run: echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" && echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
-        shell: bash
-
       - name: Checkout code
         uses: actions/checkout@v3
 
