@@ -29,7 +29,7 @@ jobs:
     env:
       APP_ENV: test
       APP_SECRET: $ecretf0rt3st
-      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI_test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI
       JWT_SECRET_KEY: config/jwt/private.pem
       JWT_PUBLIC_KEY: config/jwt/public.pem
       JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
@@ -48,6 +48,9 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Set permissions for JWT keys
+          run: chmod 600 config/jwt/private.pem config/jwt/public.pem
 
       - name: Clear Symfony cache
         env:

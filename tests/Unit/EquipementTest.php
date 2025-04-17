@@ -38,4 +38,5 @@ class EquipementTest extends TestCase
 
         $this->assertSame($expectedLinks, $equipement->getLinks());
     }
+
 }
