@@ -1,0 +1,7 @@
+# translations/messages.fr.yaml
+nom: Nom
+description: Description
+Le nom ne doit pas être vide.: Le nom ne doit pas être vide.
+Le nom doit contenir au moins {{ limit }} caractères.: Le nom doit contenir au moins {{ limit }} caractères.
+La description ne doit pas être vide.: La description ne doit pas être vide.
+La description doit contenir au moins {{ limit }} caractères.: La description doit contenir au moins {{ limit }} caractères.

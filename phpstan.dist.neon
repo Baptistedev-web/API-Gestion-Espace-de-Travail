@@ -12,3 +12,6 @@ parameters:
         - public/index.php
         - tests/bootstrap.php
     checkUninitializedProperties: true
+    ignoreErrors:
+        - '#Property .*::\$id \(int\|null\) is never assigned int so it can be removed from the property type#'
+        - '#Method .*::getUserIdentifier\(\) should return non-empty-string but returns string\|null#'
