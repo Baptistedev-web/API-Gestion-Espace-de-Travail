@@ -36,6 +36,10 @@ jobs:
 
 
     steps:
+      - name: Debug secrets
+        run: echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" && echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
+        shell: bash
+
       - name: Checkout code
         uses: actions/checkout@v3
 
