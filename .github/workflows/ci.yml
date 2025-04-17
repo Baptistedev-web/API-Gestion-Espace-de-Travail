@@ -50,7 +50,7 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-suggest
 
       - name: Set permissions for JWT keys
-          run: chmod 600 config/jwt/private.pem config/jwt/public.pem
+        run: chmod 600 config/jwt/private.pem config/jwt/public.pem
 
       - name: Clear Symfony cache
         env:
