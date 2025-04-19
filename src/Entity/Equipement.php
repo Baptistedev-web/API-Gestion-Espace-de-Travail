@@ -102,7 +102,7 @@ class Equipement
      * @return array<string, string>
      */
     #[Groups(['equipements'])]
-    public function getLinks(): array<string, string>
+    public function getLinks(): array
     {
         return [
             'self' => '/api/equipements/' . $this->id,

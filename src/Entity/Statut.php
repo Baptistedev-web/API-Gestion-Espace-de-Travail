@@ -88,7 +88,7 @@ class Statut
      * @return array<string, string>
      */
     #[Groups(['statuts'])]
-    public function getLinks(): array<string, string>
+    public function getLinks(): array
     {
         return [
             'self' => '/api/statuts/' . $this->id,
