@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Equipement;
+use App\Entity\Statut;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -57,6 +58,19 @@ class AppFixtures extends Fixture
             $equipement->setNom("Equipement $i");
             $equipement->setDescription("Description de l'équipement $i");
             $manager->persist($equipement);
+        }
+
+        // Création de 4 statuts
+        $statuts = [
+            'En attente',   // Statut pour une réservation en attente de confirmation
+            'Confirmée',    // Statut pour une réservation confirmée
+            'Annulée',      // Statut pour une réservation annulée
+            'Terminée',     // Statut pour une réservation terminée
+        ];
+        foreach ($statuts as $libelle) {
+            $statut = new Statut();
+            $statut->setLibelle($libelle);
+            $manager->persist($statut);
         }
 
         $manager->flush();
