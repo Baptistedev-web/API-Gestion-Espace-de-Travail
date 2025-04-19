@@ -84,8 +84,11 @@ class Statut
     #[Groups(['statuts'])]
     private ?string $libelle = null;
 
+    /**
+     * @return array<string, string>
+     */
     #[Groups(['statuts'])]
-    public function getLinks(): array
+    public function getLinks(): array<string, string>
     {
         return [
             'self' => '/api/statuts/' . $this->id,
