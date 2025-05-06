@@ -12,6 +12,8 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\EquipementRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -22,31 +24,31 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 #[ApiResource(
     paginationItemsPerPage: 10,
     paginationMaximumItemsPerPage: 100,
-    normalizationContext: ['groups' => ['equipements']],
-    denormalizationContext: ['groups' => ['equipements']],
+    normalizationContext: ['groups' => ['getEquipements']],
+    denormalizationContext: ['groups' => ['getEquipements']],
     operations: [
         new GetCollection(
-            description: 'Récupérer la liste des équipements',
-            normalizationContext: ['groups' => ['equipements']],
+            description: 'Récupère une collection de ressources Équipement.',
+            normalizationContext: ['groups' => ['getEquipements']],
             security: "is_granted('IS_AUTHENTICATED_FULLY')"
         ),
         new Get(
-            description: 'Récupérer un équipement par son ID',
-            normalizationContext: ['groups' => ['equipements']],
+            description: 'Récupère une ressource Équipement.',
+            normalizationContext: ['groups' => ['getEquipements']],
             security: "is_granted('IS_AUTHENTICATED_FULLY')"
         ),
         new Post(
-            description: 'Créer un nouvel équipement',
-            denormalizationContext: ['groups' => ['equipements']],
+            description: 'Crée une ressource Équipement.',
+            denormalizationContext: ['groups' => ['getEquipements']],
             security: "is_granted('ROLE_ADMIN')"
         ),
         new Put(
-            description: 'Mettre à jour un équipement existant',
-            denormalizationContext: ['groups' => ['equipements']],
+            description: 'Remplace la ressource Équipement.',
+            denormalizationContext: ['groups' => ['getEquipements']],
             security: "is_granted('ROLE_ADMIN')"
         ),
         new Delete(
-            description: 'Supprimer un équipement',
+            description: 'Supprime la ressource Équipement.',
             security: "is_granted('ROLE_ADMIN')"
         ),
     ],
@@ -55,7 +57,11 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
         'max_age' => 3600, // Cache pour 1 heure
         'shared_max_age' => 3600,
         'vary' => ['Authorization', 'Accept-Language'],
-    ]
+    ],
+)]
+#[UniqueEntity(
+    fields: ['nom'],
+    message: 'Ce nom est déjà utilisé. Veuillez en choisir un autre.'
 )]
 class Equipement
 {
@@ -65,7 +71,7 @@ class Equipement
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['equipements'])]
+    #[Groups(["getEquipements", "getReservations"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
@@ -80,7 +86,7 @@ class Equipement
         pattern: '/^[\p{L}0-9\s]+$/u',
         message: 'Le nom ne doit contenir que des lettres (y compris avec accents), des chiffres et des espaces.'
     )]
-    #[Groups(['equipements'])]
+    #[Groups(["getEquipements", "getReservations"])]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -95,21 +101,21 @@ class Equipement
         pattern: '/^[\p{L}0-9\s]+$/u',
         message: 'La description ne doit contenir que des lettres (y compris avec accents), des chiffres et des espaces.'
     )]
-    #[Groups(['equipements'])]
+    #[Groups(["getEquipements", "getReservations"])]
     private ?string $description = null;
 
     /**
-     * @return array<string, string>
+     * @var Collection<int, ReservationEquipement>
      */
-    #[Groups(['equipements'])]
-    public function getLinks(): array
+    #[ORM\OneToMany(targetEntity: ReservationEquipement::class, mappedBy: 'Equipement', orphanRemoval: true)]
+    #[Groups(["getEquipements"])]
+    private Collection $reservationEquipements;
+
+    public function __construct()
     {
-        return [
-            'self' => '/api/equipements/' . $this->id,
-            'update' => '/api/equipements/' . $this->id,
-            'delete' => '/api/equipements/' . $this->id,
-        ];
+        $this->reservationEquipements = new ArrayCollection();
     }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -135,6 +141,49 @@ class Equipement
     public function setDescription(string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    #[Groups(['equipements:read'])]
+    public function getLinks(): array
+    {
+        return [
+            'self' => '/api/equipements/' . $this->id,
+            'update' => '/api/equipements/' . $this->id,
+            'delete' => '/api/equipements/' . $this->id,
+        ];
+    }
+
+    /**
+     * @return Collection<int, ReservationEquipement>
+     */
+    public function getReservationEquipements(): Collection
+    {
+        return $this->reservationEquipements;
+    }
+
+    public function addReservationEquipement(ReservationEquipement $reservationEquipement): static
+    {
+        if (!$this->reservationEquipements->contains($reservationEquipement)) {
+            $this->reservationEquipements->add($reservationEquipement);
+            $reservationEquipement->setEquipement($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservationEquipement(ReservationEquipement $reservationEquipement): static
+    {
+        if ($this->reservationEquipements->removeElement($reservationEquipement)) {
+            // set the owning side to null (unless already changed)
+            if ($reservationEquipement->getEquipement() === $this) {
+                $reservationEquipement->setEquipement(null);
+            }
+        }
 
         return $this;
     }

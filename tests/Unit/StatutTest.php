@@ -36,4 +36,24 @@ class StatutTest extends TestCase
 
         $this->assertSame($expectedLinks, $statut->getLinks());
     }
+
+    public function testAddAndRemoveReservationEquipement(): void
+    {
+        $statut = new Statut();
+        $reservation = $this->createMock(\App\Entity\ReservationEquipement::class);
+
+        $reservation->expects($this->exactly(2))
+            ->method('setStatut')
+            ->willReturnSelf();
+
+        $reservation->expects($this->exactly(1))
+            ->method('getStatut')
+            ->willReturn($statut);
+
+        $statut->addReservationEquipement($reservation);
+        $this->assertTrue($statut->getReservationEquipements()->contains($reservation));
+
+        $statut->removeReservationEquipement($reservation);
+        $this->assertFalse($statut->getReservationEquipements()->contains($reservation));
+    }
 }

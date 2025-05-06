@@ -38,5 +38,23 @@ class EquipementTest extends TestCase
 
         $this->assertSame($expectedLinks, $equipement->getLinks());
     }
+    public function testAddAndRemoveReservationEquipement(): void
+    {
+        $equipement = new Equipement();
+        $reservation = $this->createMock(\App\Entity\ReservationEquipement::class);
 
+        $reservation->expects($this->exactly(2))
+            ->method('setEquipement')
+            ->willReturnSelf();
+
+        $reservation->expects($this->exactly(1))
+            ->method('getEquipement')
+            ->willReturn($equipement);
+
+        $equipement->addReservationEquipement($reservation);
+        $this->assertTrue($equipement->getReservationEquipements()->contains($reservation));
+
+        $equipement->removeReservationEquipement($reservation);
+        $this->assertFalse($equipement->getReservationEquipements()->contains($reservation));
+    }
 }

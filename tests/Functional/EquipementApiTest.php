@@ -6,26 +6,42 @@ namespace App\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Zenstruck\Foundry\Test\Factories;
 
 class EquipementApiTest extends WebTestCase
 {
+    use Factories;
     private KernelBrowser $client;
+
     protected function setUp(): void
     {
         $this->client = static::createClient();
         $container = $this->client->getContainer();
         $entityManager = $container->get('doctrine')->getManager();
-        $passwordHasher = $container->get('security.password_hasher');
+        $connection = $entityManager->getConnection();
 
+        $schemaManager = $connection->createSchemaManager();
         $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
         $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
 
+        // Suppression et création du schéma
         $schemaTool->dropSchema($metadata);
         $schemaTool->createSchema($metadata);
 
-        $fixture = new \App\DataFixtures\AppFixtures($passwordHasher);
-        $fixture->load($entityManager);
+        // Chargement des fixtures
+        $statutFixtures = new \App\DataFixtures\StatutFixtures();
+        $statutFixtures->load($entityManager);
+
+        $userFixtures = new \App\DataFixtures\UserFixtures($container->get('security.password_hasher'));
+        $userFixtures->load($entityManager);
+
+        $equipementFixtures = new \App\DataFixtures\EquipementFixtures();
+        $equipementFixtures->load($entityManager);
+
+        $reservationEquipementFixtures = new \App\DataFixtures\ReservationEquipementFixtures();
+        $reservationEquipementFixtures->load($entityManager);
     }
+
     private function authenticate(string $email, string $password): string
     {
         $this->client->request('POST', '/api/login_check', [], [], [

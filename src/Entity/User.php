@@ -5,12 +5,64 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Annotation\Groups;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\PUT;
+use ApiPlatform\Metadata\Link;
+use App\State\UserStateProcessor;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ApiResource(
+    normalizationContext: ['groups' => ['getUsers']],
+    denormalizationContext: ['groups' => ['getUsers']],
+    operations: [
+        new Post(
+            description: "Crée une ressource Utilisateur.",
+            denormalizationContext: ['groups' => ['getUsers']],
+            security: "is_granted('PUBLIC_ACCESS')",
+            processor: UserStateProcessor::class,
+            validationContext: ['groups' => ['getUsers']]
+        ),
+        new Delete(
+            description: "Supprime la ressource Utilisateur.",
+            security: "is_granted('ROLE_USER') and object == user"
+        ),
+        new Get(
+            description: "Récupère une ressource Utilisateur.",
+            normalizationContext: ['groups' => ['getUsers']],
+            security: "is_granted('ROLE_USER') and object == user"
+        ),
+        new PUT(
+            description: "Remplace la ressource Utilisateur.",
+            denormalizationContext: ['groups' => ['getUsers']],
+            normalizationContext: ['groups' => ['getUsers']],
+            security: "is_granted('ROLE_USER') and object == user",
+            processor: UserStateProcessor::class,
+            validationContext: ['groups' => ['getUsers']]
+        ),
+    ],
+    formats: ['jsonld', 'json'],
+    cacheHeaders: [
+        'max_age' => 3600, // Cache pour 1 heure
+        'shared_max_age' => 3600,
+        'vary' => ['Authorization', 'Accept-Language'],
+    ],
+)]
+#[UniqueEntity(
+    fields: ['email'],
+    message: "L'email {{ value }} est déjà utilisé par un autre utilisateur."
+)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -20,66 +72,91 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getUsers", "getReservations"])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Assert\NotBlank(message: "L'email ne doit pas être vide.")]
     #[Assert\Email(
         mode: 'strict',
         message: "L'adresse e-mail {{ value }} n'est pas valide."
     )]
+    #[Groups(["getUsers", "getReservations"])]
     private ?string $email = null;
-
+    
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(["getUsers"])]
     private array $roles = [];
-
+    
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Assert\NotBlank(message: 'Le mot de passe ne doit pas être vide.')]
+    #[Assert\NotBlank(message: "Le mot de passe ne doit pas être vide.")]
     #[Assert\Length(
         min: 12,
         max: 255,
-        minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.',
-        maxMessage: 'Le mot de passe ne doit pas dépasser {{ limit }} caractères.'
+        minMessage: "Le mot de passe doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "Le mot de passe ne doit pas dépasser {{ limit }} caractères."
     )]
     #[Assert\Regex(
         pattern: '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/',
-        message: 'Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial.'
+        message: "Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial."
     )]
+    #[Groups(["getUsers"])]
     private ?string $password = null;
-
+    
+    /**
+     * @var string|null Plain password for validation and hash
+     */
+    #[SerializedName('password')]
+    #[Groups(["getUsers"])]
+    private ?string $plainPassword = null;
+    
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Le nom ne doit pas être vide.')]
+    #[Assert\NotBlank(message: "Le nom ne doit pas être vide.")]
     #[Assert\Length(
         min: 3,
         max: 100,
-        minMessage: 'Le nom de famille doit contenir au moins {{ limit }} caractères.',
-        maxMessage: 'Le nom de famille ne doit pas dépasser {{ limit }} caractères.'
+        minMessage: "Le nom de famille doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "Le nom de famille ne doit pas dépasser {{ limit }} caractères."
     )]
     #[Assert\Regex(
         pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
-        message: 'Le nom de famille ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets.'
+        message: "Le nom de famille ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets."
     )]
+    #[Groups(["getUsers", "getReservations"])]
     private ?string $nom = null;
-
+    
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Le prénom ne doit pas être vide.')]
+    #[Assert\NotBlank(message: "Le prénom ne doit pas être vide.")]
     #[Assert\Length(
         min: 3,
         max: 100,
-        minMessage: 'Le prénom doit contenir au moins {{ limit }} caractères.',
-        maxMessage: 'Le prénom ne doit pas dépasser {{ limit }} caractères.'
+        minMessage: "Le prénom doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "Le prénom ne doit pas dépasser {{ limit }} caractères."
     )]
     #[Assert\Regex(
         pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
-        message: 'Le prénom ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets.'
+        message: "Le prénom ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets."
     )]
+    #[Groups(["getUsers", "getReservations"])]
     private ?string $prenom = null;
+
+    /**
+     * @var Collection<int, ReservationEquipement>
+     */
+    #[ORM\OneToMany(targetEntity: ReservationEquipement::class, mappedBy: 'User', orphanRemoval: true)]
+    #[Groups(["getUsers"])]
+    private Collection $reservationEquipements;
+
+    public function __construct()
+    {
+        $this->reservationEquipements = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -152,8 +229,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+        $this->plainPassword = null; // Clear plain password after hash
 
         return $this;
+    }
+
+    public function setPlainPassword(?string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
     }
 
     /**
@@ -162,7 +252,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->plainPassword = null;
     }
 
     public function getNom(): ?string
@@ -185,6 +275,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPrenom(string $prenom): static
     {
         $this->prenom = $prenom;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    #[Groups(['getUsers'])]
+    public function getLinks(): array
+    {
+        return [
+            'self' => '/api/users/' . $this->id,
+            'update' => '/api/users/' . $this->id,
+            'delete' => '/api/users/' . $this->id,
+        ];
+    }
+
+    /**
+     * @return Collection<int, ReservationEquipement>
+     */
+    public function getReservationEquipements(): Collection
+    {
+        return $this->reservationEquipements;
+    }
+
+    public function addReservationEquipement(ReservationEquipement $reservationEquipement): static
+    {
+        if (!$this->reservationEquipements->contains($reservationEquipement)) {
+            $this->reservationEquipements->add($reservationEquipement);
+            $reservationEquipement->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservationEquipement(ReservationEquipement $reservationEquipement): static
+    {
+        if ($this->reservationEquipements->removeElement($reservationEquipement)) {
+            // set the owning side to null (unless already changed)
+            if ($reservationEquipement->getUser() === $this) {
+                $reservationEquipement->setUser(null);
+            }
+        }
 
         return $this;
     }

@@ -12,6 +12,8 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\StatutRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -22,31 +24,31 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 #[ApiResource(
     paginationItemsPerPage: 10,
     paginationMaximumItemsPerPage: 100,
-    normalizationContext: ['groups' => ['statuts']],
-    denormalizationContext: ['groups' => ['statuts']],
+    normalizationContext: ['groups' => ['getStatuts']],
+    denormalizationContext: ['groups' => ['getStatuts']],
     operations: [
         new GetCollection(
-            description: 'Récupérer la liste des statuts',
-            normalizationContext: ['groups' => ['statuts']],
+            description: 'Récupère une collection de ressources Statut.',
+            normalizationContext: ['groups' => ['getStatuts']],
             security: "is_granted('IS_AUTHENTICATED_FULLY')"
         ),
         new Get(
-            description: 'Récupérer un statut par son ID',
-            normalizationContext: ['groups' => ['statuts']],
+            description: 'Récupère une ressource Statut.',
+            normalizationContext: ['groups' => ['getStatuts']],
             security: "is_granted('IS_AUTHENTICATED_FULLY')"
         ),
         new Post(
-            description: 'Créer un nouveau statut',
-            denormalizationContext: ['groups' => ['statuts']],
+            description: 'Crée une ressource Statut.',
+            denormalizationContext: ['groups' => ['getStatuts']],
             security: "is_granted('ROLE_ADMIN')"
         ),
         new Put(
-            description: 'Mettre à jour un statut existant',
-            denormalizationContext: ['groups' => ['statuts']],
+            description: 'Remplace la ressource Statut.',
+            denormalizationContext: ['groups' => ['getStatuts']],
             security: "is_granted('ROLE_ADMIN')"
         ),
         new Delete(
-            description: 'Supprimer un statut',
+            description: 'Supprime la ressource Statut.',
             security: "is_granted('ROLE_ADMIN')"
         ),
     ],
@@ -55,7 +57,7 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
         'max_age' => 3600, // Cache pour 1 heure
         'shared_max_age' => 3600,
         'vary' => ['Authorization', 'Accept-Language'],
-    ]
+    ],
 )]
 #[UniqueEntity(
     fields: ['libelle'],
@@ -66,28 +68,40 @@ class Statut
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['statuts'])]
+    #[Groups(["getStatuts", "getReservations"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
-    #[Assert\NotBlank(message: 'Le libellé ne peut pas être vide')]
+    #[Assert\NotBlank(message: 'Le libellé ne peut pas être vide.')]
     #[Assert\Length(
         min: 2,
         max: 255,
-        minMessage: 'Le libellé doit contenir au moins {{ limit }} caractères',
-        maxMessage: 'Le libellé ne peut pas dépasser {{ limit }} caractères'
+        minMessage: 'Le libellé doit contenir au moins {{ limit }} caractères.',
+        maxMessage: 'Le libellé ne peut pas dépasser {{ limit }} caractères.'
     )]
     #[Assert\Regex(
         pattern: '/^[\p{L}\s]+$/u',
-        message: 'Le libellé ne peut contenir que des lettres (y compris avec accents) et des espaces'
+        message: 'Le libellé ne peut contenir que des lettres (y compris avec accents) et des espaces.'
     )]
-    #[Groups(['statuts'])]
+    #[Groups(["getStatuts", "getReservations"])]
     private ?string $libelle = null;
+
+    /**
+     * @var Collection<int, ReservationEquipement>
+     */
+    #[ORM\OneToMany(targetEntity: ReservationEquipement::class, mappedBy: 'Statut', orphanRemoval: true)]
+    #[Groups(["getStatuts"])]
+    private Collection $reservationEquipements;
+
+    public function __construct()
+    {
+        $this->reservationEquipements = new ArrayCollection();
+    }
 
     /**
      * @return array<string, string>
      */
-    #[Groups(['statuts'])]
+    #[Groups(['getStatuts'])]
     public function getLinks(): array
     {
         return [
@@ -110,6 +124,36 @@ class Statut
     public function setLibelle(string $libelle): static
     {
         $this->libelle = $libelle;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ReservationEquipement>
+     */
+    public function getReservationEquipements(): Collection
+    {
+        return $this->reservationEquipements;
+    }
+
+    public function addReservationEquipement(ReservationEquipement $reservationEquipement): static
+    {
+        if (!$this->reservationEquipements->contains($reservationEquipement)) {
+            $this->reservationEquipements->add($reservationEquipement);
+            $reservationEquipement->setStatut($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservationEquipement(ReservationEquipement $reservationEquipement): static
+    {
+        if ($this->reservationEquipements->removeElement($reservationEquipement)) {
+            // set the owning side to null (unless already changed)
+            if ($reservationEquipement->getStatut() === $this) {
+                $reservationEquipement->setStatut(null);
+            }
+        }
 
         return $this;
     }

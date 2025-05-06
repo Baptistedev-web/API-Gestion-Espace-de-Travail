@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
-use App\Entity\Equipement;
-use App\Entity\Statut;
 use App\Entity\User;
+use App\Factory\UserFactory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class AppFixtures extends Fixture
+class UserFixtures extends Fixture
 {
     /**
      * @var UserPasswordHasherInterface
@@ -19,7 +18,7 @@ class AppFixtures extends Fixture
     private UserPasswordHasherInterface $userPasswordHasher;
 
     /**
-     * Constructeur de la classe AppFixtures.
+     * Constructeur de la classe UserFixtures.
      * @param UserPasswordHasherInterface $userPasswordHasher
      */
     public function __construct (UserPasswordHasherInterface $userPasswordHasher)
@@ -52,26 +51,9 @@ class AppFixtures extends Fixture
         $userAdmin->setPassword($this->userPasswordHasher->hashPassword($userAdmin, "@Password1234!"));
         $manager->persist($userAdmin);
 
-        // Création de 10 équipements
-        for ($i = 1; $i <= 10; $i++) {
-            $equipement = new Equipement();
-            $equipement->setNom("Equipement $i");
-            $equipement->setDescription("Description de l'équipement $i");
-            $manager->persist($equipement);
-        }
 
-        // Création de 4 statuts
-        $statuts = [
-            'En attente',   // Statut pour une réservation en attente de confirmation
-            'Confirmée',    // Statut pour une réservation confirmée
-            'Annulée',      // Statut pour une réservation annulée
-            'Terminée',     // Statut pour une réservation terminée
-        ];
-        foreach ($statuts as $libelle) {
-            $statut = new Statut();
-            $statut->setLibelle($libelle);
-            $manager->persist($statut);
-        }
+        // Générer 10 utilisateurs supplementaires avec informations réalistes
+        UserFactory::createMany(10);
 
         $manager->flush();
     }

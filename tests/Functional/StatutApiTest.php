@@ -6,9 +6,11 @@ namespace App\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Zenstruck\Foundry\Test\Factories;
 
 class StatutApiTest extends WebTestCase
 {
+    use Factories;
     private KernelBrowser $client;
 
     protected function setUp(): void
@@ -16,16 +18,28 @@ class StatutApiTest extends WebTestCase
         $this->client = static::createClient();
         $container = $this->client->getContainer();
         $entityManager = $container->get('doctrine')->getManager();
-        $passwordHasher = $container->get('security.password_hasher');
+        $connection = $entityManager->getConnection();
 
+        $schemaManager = $connection->createSchemaManager();
         $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
         $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
 
+        // Suppression et création du schéma
         $schemaTool->dropSchema($metadata);
         $schemaTool->createSchema($metadata);
 
-        $fixture = new \App\DataFixtures\AppFixtures($passwordHasher);
-        $fixture->load($entityManager);
+        // Chargement des fixtures
+        $statutFixtures = new \App\DataFixtures\StatutFixtures();
+        $statutFixtures->load($entityManager);
+
+        $userFixtures = new \App\DataFixtures\UserFixtures($container->get('security.password_hasher'));
+        $userFixtures->load($entityManager);
+
+        $equipementFixtures = new \App\DataFixtures\EquipementFixtures();
+        $equipementFixtures->load($entityManager);
+
+        $reservationEquipementFixtures = new \App\DataFixtures\ReservationEquipementFixtures();
+        $reservationEquipementFixtures->load($entityManager);
     }
 
     private function authenticate(string $email, string $password): string
@@ -150,7 +164,7 @@ class StatutApiTest extends WebTestCase
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('violations', $responseData);
         $this->assertSame('libelle', $responseData['violations'][0]['propertyPath']);
-        $this->assertSame('Le libellé ne peut pas être vide', $responseData['violations'][0]['message']);
+        $this->assertSame('Le libellé ne peut pas être vide.', $responseData['violations'][0]['message']);
     }
     public function testLibelleTropCourt(): void
     {
@@ -168,7 +182,7 @@ class StatutApiTest extends WebTestCase
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('violations', $responseData);
         $this->assertSame('libelle', $responseData['violations'][0]['propertyPath']);
-        $this->assertSame('Le libellé doit contenir au moins 2 caractères', $responseData['violations'][0]['message']);
+        $this->assertSame('Le libellé doit contenir au moins 2 caractères.', $responseData['violations'][0]['message']);
     }
     public function testLibelleNonUnique(): void
     {
