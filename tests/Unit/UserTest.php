@@ -283,4 +283,63 @@ class UserTest extends TestCase
         $stateProcessor = new UserStateProcessor($entityManager, $passwordHasher);
         $stateProcessor->process($user, $operation);
     }
+    public function testProcessHashesPasswordWhenPlainPasswordProvided(): void
+    {
+        $user = new User();
+        $reflection = new \ReflectionClass($user);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($user, 1);
+        $user->setPlainPassword('new_password');
+
+        $existingUser = new User();
+        $property->setValue($existingUser, 1);
+        $existingUser->setPassword('old_hashed_password');
+
+        $repository = $this->createMock(EntityRepository::class);
+        $repository->method('find')->with(1)->willReturn($existingUser);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')->with(User::class)->willReturn($repository);
+
+        $passwordHasher = $this->createMock(\App\Security\PasswordHasher::class);
+        $passwordHasher->method('hashPassword')->with($user, 'new_password')->willReturn('new_hashed_password');
+
+        $entityManager->expects($this->once())->method('persist')->with($user);
+        $entityManager->expects($this->once())->method('flush');
+
+        $stateProcessor = new UserStateProcessor($entityManager, $passwordHasher);
+        $result = $stateProcessor->process($user, $this->createMock(Operation::class));
+
+        $this->assertSame('new_hashed_password', $result->getPassword());
+        $this->assertNull($result->getPlainPassword());
+    }
+    public function testProcessKeepsExistingPasswordWhenPlainPasswordNotProvided(): void
+    {
+        $user = new User();
+        $reflection = new \ReflectionClass($user);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($user, 1);
+
+        $existingUser = new User();
+        $property->setValue($existingUser, 1);
+        $existingUser->setPassword('old_hashed_password');
+
+        $repository = $this->createMock(EntityRepository::class);
+        $repository->method('find')->with(1)->willReturn($existingUser);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')->with(User::class)->willReturn($repository);
+
+        $passwordHasher = $this->createMock(\App\Security\PasswordHasher::class);
+
+        $entityManager->expects($this->once())->method('persist')->with($user);
+        $entityManager->expects($this->once())->method('flush');
+
+        $stateProcessor = new UserStateProcessor($entityManager, $passwordHasher);
+        $result = $stateProcessor->process($user, $this->createMock(Operation::class));
+
+        $this->assertSame('old_hashed_password', $result->getPassword());
+    }
 }
