@@ -2,53 +2,59 @@
 
 namespace App\DataPersister;
 
-use ApiPlatform\Core\DataPersister\ContextAwareDataPersisterInterface;
+use ApiPlatform\Metadata\Operation;
+use ApiPlatform\State\ProcessorInterface;
 use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class UserDataPersister implements ContextAwareDataPersisterInterface
+class UserDataPersister implements ProcessorInterface
 {
-    private $decorated;
-    private $passwordHasher;
+    private EntityManagerInterface $entityManager;
+    private UserPasswordHasherInterface $passwordHasher;
 
-    public function __construct(ContextAwareDataPersisterInterface $decorated, UserPasswordHasherInterface $passwordHasher)
+    public function __construct(EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher)
     {
-        $this->decorated = $decorated;
+        $this->entityManager = $entityManager;
         $this->passwordHasher = $passwordHasher;
     }
 
-    public function supports($data, array $context = []): bool
+    /**
+     * Process the provided data (creation or update of a User entity).
+     *
+     * @param mixed $data
+     * @param Operation $operation
+     * @param array $uriVariables
+     * @param array $context
+     * @return User
+     */
+    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): User
     {
-        return $data instanceof User;
-    }
+        // Vérifiez que $data est bien une instance de l'entité User
+        if (!$data instanceof User) {
+            throw new \InvalidArgumentException('Data must be an instance of User.');
+        }
 
-    public function persist($data, array $context = []): object
-    {
-        if ($data instanceof User) {
-            if (isset($context['collection_operation_name']) && $context['collection_operation_name'] === 'post') {
-                if ($data->getPassword()) {
-                    $data->setPassword($this->passwordHasher->hashPassword($data, $data->getPassword()));
-                }
+        // Si l'utilisateur est nouveau, on définit les rôles et hash le mot de passe
+        if (null === $data->getId()) {
+            $data->setRoles(['ROLE_USER']);
+        }
 
-                $data->setRoles(['ROLE_USER']);
-            }
-
-            if (isset($context['item_operation_name']) && $context['item_operation_name'] === 'put') {
-                $existingPassword = $this->decorated->persist($data, $context)->getPassword();
-                if ($data->getPassword() && $data->getPassword() !== $existingPassword) {
-                    $data->setPassword($this->passwordHasher->hashPassword($data, $data->getPassword()));
-                } else {
-                    $data->setPassword($existingPassword);
-                }
-
-                $data->setRoles($data->getRoles());
+        $plainPassword = $data->getPlainPassword();
+        if ($plainPassword) {
+            $hashedPassword = $this->passwordHasher->hashPassword($data, $plainPassword);
+            $data->setPassword($hashedPassword);
+            $data->eraseCredentials();
+        } else {
+            $existingUser = $this->entityManager->getRepository(User::class)->find($data->getId());
+            if ($existingUser) {
+                $data->setPassword($existingUser->getPassword());
             }
         }
-        return $this->decorated->persist($data, $context);
-    }
 
-    public function remove($data, array $context = []): void
-    {
-        $this->decorated->remove($data, $context);
+        $this->entityManager->persist($data);
+        $this->entityManager->flush();
+
+        return $data;
     }
 }

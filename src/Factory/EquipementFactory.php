@@ -63,6 +63,7 @@ final class EquipementFactory extends PersistentProxyObjectFactory
             'Bureau' => $faker->randomElement(['Chaise', 'Bureau', 'Lampe', 'Écran', 'Clavier', 'Souris']),
             'Salle de réunion' => $faker->randomElement(['Projecteur', 'Table', 'Haut-parleur', 'Tableau blanc', 'Télévision']),
             'Espace de collaboration' => $faker->randomElement(['Canapé', 'Table basse', 'Station de recharge', 'Panneau acoustique', 'Tabouret']),
+            default => 'Équipement générique',
         };
     }
 

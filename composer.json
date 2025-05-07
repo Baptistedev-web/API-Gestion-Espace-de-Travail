@@ -42,6 +42,7 @@
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
+            "phpstan/extension-installer": true,
             "symfony/flex": true,
             "symfony/runtime": true
         },
@@ -92,6 +93,7 @@
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": ">=4.1",
         "friendsofphp/php-cs-fixer": ">=3.75",
+        "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": ">=2.1.14",
         "phpunit/php-code-coverage": "^10.1.16",
         "phpunit/phpunit": "^10.5.46",

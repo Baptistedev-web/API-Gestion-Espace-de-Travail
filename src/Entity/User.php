@@ -17,7 +17,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\PUT;
+use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Link;
 use App\State\UserStateProcessor;
 use Symfony\Component\Serializer\Annotation\SerializedName;
@@ -59,11 +59,11 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
         'vary' => ['Authorization', 'Accept-Language'],
     ],
 )]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(
     fields: ['email'],
     message: "L'email {{ value }} est déjà utilisé par un autre utilisateur."
 )]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
@@ -226,7 +226,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(string $password): self
     {
         $this->password = $password;
         $this->plainPassword = null; // Clear plain password after hash

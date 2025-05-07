@@ -6,7 +6,12 @@ namespace App\Tests\Repository;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use ApiPlatform\Metadata\Operation;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\State\UserStateProcessor;
+use App\DataPersister\UserDataPersister;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 
@@ -154,5 +159,77 @@ class UserTest extends TestCase
 
         $user->removeReservationEquipement($reservation);
         $this->assertFalse($user->getReservationEquipements()->contains($reservation));
+    }
+    public function testProcessUpdatesPasswordWhenModified(): void
+    {
+        $user = new User();
+        $reflection = new \ReflectionClass($user);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($user, 1);
+        $user->setPlainPassword('new_password');
+
+        $existingUser = new User();
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($existingUser, 1);
+        $existingUser->setPassword('old_hashed_password');
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')
+            ->willReturnCallback(function () use ($existingUser) {
+                return new class($existingUser) {
+                    private $existingUser;
+                    public function __construct($existingUser) { $this->existingUser = $existingUser; }
+                    public function find($id) { return $this->existingUser; }
+                };
+            });
+
+        $passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
+        $operation = $this->createMock(Operation::class);
+
+        $passwordHasher->method('hashPassword')
+            ->willReturn('new_hashed_password');
+
+        $entityManager->expects($this->once())->method('persist')->with($user);
+        $entityManager->expects($this->once())->method('flush');
+
+        $dataPersister = new UserDataPersister($entityManager, $passwordHasher);
+        $result = $dataPersister->process($user, $operation);
+
+        $this->assertSame('new_hashed_password', $result->getPassword());
+    }
+
+    public function testProcessKeepsOldPasswordWhenNotModified(): void
+    {
+        $user = new User();
+        $reflection = new \ReflectionClass($user);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($user, 1);
+
+        $existingUser = new User();
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($existingUser, 1);
+        $existingUser->setPassword('old_hashed_password');
+
+        $repository = $this->createMock(EntityRepository::class);
+        $repository->method('find')->with(1)->willReturn($existingUser);
+
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')->with(User::class)->willReturn($repository);
+
+        $passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
+        $operation = $this->createMock(Operation::class);
+
+        $entityManager->expects($this->once())->method('persist')->with($user);
+        $entityManager->expects($this->once())->method('flush');
+
+        $dataPersister = new UserDataPersister($entityManager, $passwordHasher);
+        $result = $dataPersister->process($user, $operation);
+
+        $this->assertSame('old_hashed_password', $result->getPassword());
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\DataFixtures\ReservationEquipementFixtures;
 use App\Entity\ReservationEquipement;
 use App\Entity\Equipement;
 use App\Entity\Statut;
@@ -71,7 +72,6 @@ class ReservationEquipementTest extends TestCase
         $reservation->setEquipement($equipement);
         $this->assertSame($equipement, $reservation->getEquipement());
     }
-
     public function testGetLinks(): void
     {
         $reservation = new ReservationEquipement();
@@ -84,5 +84,17 @@ class ReservationEquipementTest extends TestCase
         $this->assertArrayHasKey('update', $links);
         $this->assertArrayHasKey('delete', $links);
         $this->assertSame('/api/reservation_equipements/1', $links['self']);
+    }
+    public function testGetDependencies(): void
+    {
+        $fixtures = new ReservationEquipementFixtures();
+
+        $expectedDependencies = [
+            \App\DataFixtures\EquipementFixtures::class,
+            \App\DataFixtures\UserFixtures::class,
+            \App\DataFixtures\StatutFixtures::class,
+        ];
+
+        $this->assertSame($expectedDependencies, $fixtures->getDependencies());
     }
 }
