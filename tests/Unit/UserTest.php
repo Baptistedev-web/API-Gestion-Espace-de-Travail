@@ -232,4 +232,55 @@ class UserTest extends TestCase
 
         $this->assertSame('old_hashed_password', $result->getPassword());
     }
+    public function testProcessThrowsExceptionForInvalidData(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Data must be an instance of User.');
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
+        $operation = $this->createMock(Operation::class);
+
+        $dataPersister = new UserDataPersister($entityManager, $passwordHasher);
+        $dataPersister->process(new \stdClass(), $operation); // Objet non-User
+    }
+    public function testProcessSetsDefaultRolesForNewUser(): void
+    {
+        $user = new User();
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
+        $operation = $this->createMock(Operation::class);
+
+        $entityManager->expects($this->once())->method('persist')->with($user);
+        $entityManager->expects($this->once())->method('flush');
+
+        $dataPersister = new UserDataPersister($entityManager, $passwordHasher);
+        $dataPersister->process($user, $operation);
+
+        $this->assertSame(['ROLE_USER'], $user->getRoles());
+    }
+    public function testProcessThrowsExceptionWhenUserNotFound(): void
+    {
+        $user = new User();
+        $reflection = new \ReflectionClass($user);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($user, 1);
+
+        $entityRepository = $this->createMock(\Doctrine\ORM\EntityRepository::class);
+        $entityRepository->method('find')->with(1)->willReturn(null);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')->with(User::class)->willReturn($entityRepository);
+
+        $passwordHasher = $this->createMock(\App\Security\PasswordHasher::class);
+        $operation = $this->createMock(Operation::class);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Utilisateur non trouvé');
+
+        $stateProcessor = new UserStateProcessor($entityManager, $passwordHasher);
+        $stateProcessor->process($user, $operation);
+    }
 }
