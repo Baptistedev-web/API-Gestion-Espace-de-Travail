@@ -30,6 +30,7 @@ final class EquipementFactory extends PersistentProxyObjectFactory
      * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
      *
      * @todo add your default values here
+     * @return array<string, string>
      */
     protected function defaults(): array
     {
@@ -53,26 +54,37 @@ final class EquipementFactory extends PersistentProxyObjectFactory
 
     /**
      * Génère un nom réaliste pour un équipement en fonction de la catégorie.
+     *
+     * @return string
      */
     private static function generateRealisticName(): string
     {
-        $faker = self::faker('fr_FR');
+        $faker = self::faker();
         $category = $faker->randomElement(['Bureau', 'Salle de réunion', 'Espace de collaboration']);
 
-        return match ($category) {
+        if (!is_string($category)) {
+            $category = 'Équipement générique';
+        }
+
+        $name = match ($category) {
             'Bureau' => $faker->randomElement(['Chaise', 'Bureau', 'Lampe', 'Écran', 'Clavier', 'Souris']),
             'Salle de réunion' => $faker->randomElement(['Projecteur', 'Table', 'Haut-parleur', 'Tableau blanc', 'Télévision']),
             'Espace de collaboration' => $faker->randomElement(['Canapé', 'Table basse', 'Station de recharge', 'Panneau acoustique', 'Tabouret']),
             default => 'Équipement générique',
         };
+
+        return is_string($name) ? $name : 'Équipement générique';
     }
 
     /**
      * Génère une description réaliste pour un équipement.
+     *
+     * @param string $nom Le nom de l'équipement.
+     * @return string La description générée.
      */
     private static function generateRealisticDescription(string $nom): string
     {
-        $faker = self::faker('fr_FR');
+        $faker = self::faker();
         return match ($nom) {
             'Chaise' => 'Une chaise ergonomique idéale pour le bureau, offrant un confort optimal.',
             'Bureau' => 'Un bureau spacieux et moderne, parfait pour travailler efficacement.',

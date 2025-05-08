@@ -8,6 +8,9 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+/**
+ * @implements ProcessorInterface<User, User|null>
+ */
 class UserDataPersister implements ProcessorInterface
 {
     private EntityManagerInterface $entityManager;
@@ -22,16 +25,16 @@ class UserDataPersister implements ProcessorInterface
     /**
      * Process the provided data (creation or update of a User entity).
      *
-     * @param mixed $data
+     * @param User $data
      * @param Operation $operation
-     * @param array $uriVariables
-     * @param array $context
+     * @param array<string, mixed> $uriVariables
+     * @param array<string, mixed> $context
      * @return User
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): User
     {
         // Vérifiez que $data est bien une instance de l'entité User
-        if (!$data instanceof User) {
+        if (!($data instanceof User)) {
             throw new \InvalidArgumentException('Data must be an instance of User.');
         }
 
@@ -47,7 +50,7 @@ class UserDataPersister implements ProcessorInterface
             $data->eraseCredentials();
         } else {
             $existingUser = $this->entityManager->getRepository(User::class)->find($data->getId());
-            if ($existingUser) {
+            if ($existingUser && $existingUser->getPassword() !== null) {
                 $data->setPassword($existingUser->getPassword());
             }
         }

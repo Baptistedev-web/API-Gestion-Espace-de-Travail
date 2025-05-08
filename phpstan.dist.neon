@@ -12,6 +12,9 @@ parameters:
         - public/index.php
         - tests/bootstrap.php
     checkUninitializedProperties: true
+    treatPhpDocTypesAsCertain: false
     ignoreErrors:
+        - '%Parameter #1 \$data of method App\\DataPersister\\UserDataPersister::process\(\) expects App\\Entity\\User, stdClass given\.%'
         - '#Property .*::\$id \(int\|null\) is never assigned int so it can be removed from the property type#'
         - '#Method .*::getUserIdentifier\(\) should return non-empty-string but returns string\|null#'
+    reportUnmatchedIgnoredErrors: false

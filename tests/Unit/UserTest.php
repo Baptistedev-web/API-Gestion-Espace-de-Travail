@@ -177,11 +177,16 @@ class UserTest extends TestCase
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->method('getRepository')
-            ->willReturnCallback(function () use ($existingUser) {
-                return new class($existingUser) {
-                    private $existingUser;
-                    public function __construct($existingUser) { $this->existingUser = $existingUser; }
-                    public function find($id) { return $this->existingUser; }
+            ->willReturnCallback(function () use ($existingUser): EntityRepository {
+                return new class($existingUser) extends EntityRepository {
+                    private User $existingUser;
+                    public function __construct(User $existingUser) {
+                        $this->existingUser = $existingUser;
+                    }
+                    public function find($id, $lockMode = null, ?int $lockVersion = null): object
+                    {
+                        return $this->existingUser;
+                    }
                 };
             });
 

@@ -30,10 +30,12 @@ final class ReservationEquipementFactory extends PersistentProxyObjectFactory
      * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
      *
      * @todo add your default values here
+     *
+     * @return array<string, mixed>
      */
     protected function defaults(): array
     {
-        $faker = self::faker('fr_FR');
+        $faker = self::faker();
         $dateReservation = $faker->dateTimeBetween('now', '+1 month');
         $heureDebut = $faker->dateTimeBetween(
             $dateReservation->format('Y-m-d') . ' 08:00:00',
