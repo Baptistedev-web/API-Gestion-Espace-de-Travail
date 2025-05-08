@@ -7,6 +7,7 @@ namespace App\Tests\Unit;
 use App\Entity\Equipement;
 use App\Factory\EquipementFactory;
 use PHPUnit\Framework\TestCase;
+use Faker\Factory as FakerFactory;
 
 /**
  * Classe utilitaire pour tester le code dans les méthodes privées de EquipementFactory
@@ -57,7 +58,6 @@ class EquipementFactoryTestUtil
         };
     }
 }
-
 class EquipementTest extends TestCase
 {
     public function testEquipementSettersAndGetters(): void
@@ -155,5 +155,56 @@ class EquipementTest extends TestCase
         
         // La méthode devrait retourner la description générique
         $this->assertSame($defaultDescription, $result);
+    }
+    public function testGenerateRealisticNameWithInvalidCategory(): void
+    {
+        // Cas où la catégorie est invalide (non chaîne)
+        $category = 123; // Catégorie invalide
+        $name = 'Chaise'; // Nom valide
+
+        $result = EquipementFactoryTestUtil::generateRealisticNameTest((string) $category, $name);
+
+        // Vérifier que la catégorie invalide retourne "Équipement générique"
+        $this->assertSame('Équipement générique', $result);
+    }
+    public function testGenerateRealisticDescriptionWithValidName(): void
+    {
+        // Cas où le nom est valide
+        $nom = 'Chaise'; // Nom valide
+        $defaultDescription = 'Description générique générée pour un équipement inconnu.';
+
+        $result = EquipementFactoryTestUtil::generateRealisticDescriptionTest($nom, $defaultDescription);
+
+        // Vérifier que la description correspond au cas spécifique
+        $this->assertSame('Une chaise ergonomique idéale pour le bureau, offrant un confort optimal.', $result);
+    }
+    public function testGenerateRealisticDescriptionWithInvalidName(): void
+    {
+        // Cas où le nom est inconnu
+        $nom = 'Nom inconnu'; // Nom non couvert par les cas spécifiques
+        $defaultDescription = 'Description générique générée pour un équipement inconnu.';
+
+        $result = EquipementFactoryTestUtil::generateRealisticDescriptionTest($nom, $defaultDescription);
+
+        // Vérifier que la description correspond au cas par défaut
+        $this->assertSame($defaultDescription, $result);
+    }
+    public static function generateRealisticNameTest(string|null $category, string|null $name): string
+    {
+        if (!is_string($category)) {
+            $category = 'Équipement générique';
+        }
+
+        switch ($category) {
+            case 'Bureau':
+            case 'Salle de réunion':
+            case 'Espace de collaboration':
+                break;
+            default:
+                $name = 'Équipement générique';
+        }
+
+        // Vérification stricte que $name est une chaîne non vide
+        return is_string($name) && $name !== '' ? $name : 'Équipement générique';
     }
 }
