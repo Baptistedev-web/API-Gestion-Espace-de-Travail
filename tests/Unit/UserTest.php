@@ -347,4 +347,24 @@ class UserTest extends TestCase
 
         $this->assertSame('old_hashed_password', $result->getPassword());
     }
+
+    /**
+     * Test pour vérifier que UserStateProcessor lance une exception
+     * lorsqu'un objet qui n'est pas de type User est passé
+     */
+    public function testUserStateProcessorThrowsExceptionForInvalidType(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Expected instance of User.');
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $passwordHasher = $this->createMock(\App\Security\PasswordHasher::class);
+        $operation = $this->createMock(Operation::class);
+
+        // Créer un objet qui n'est pas de type User
+        $invalidData = new \stdClass();
+
+        $stateProcessor = new UserStateProcessor($entityManager, $passwordHasher);
+        $stateProcessor->process($invalidData, $operation);
+    }
 }
