@@ -71,7 +71,7 @@ class ReservationEquipement
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     #[Groups(["getReservations"])]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\ManyToOne(inversedBy: 'reservationEquipements')]
     #[ORM\JoinColumn(nullable: false)]
@@ -92,7 +92,7 @@ class ReservationEquipement
         message: "La date de réservation doit être aujourd'hui ou dans le futur."
     )]
     #[Groups(["getReservations"])]
-    private ?\DateTime $dateReservation = null;
+    private \DateTime $dateReservation;
     
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     #[Assert\NotNull(message: "L'heure de début ne doit pas être vide.")]
@@ -101,7 +101,7 @@ class ReservationEquipement
         message: "L'heure de début doit être inférieure à l'heure de fin."
     )]
     #[Groups(["getReservations"])]
-    private ?\DateTime $heureDebut = null;
+    private \DateTime $heureDebut;
     
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     #[Assert\NotNull(message: "L'heure de fin ne doit pas être vide.")]
@@ -110,7 +110,7 @@ class ReservationEquipement
         message: "L'heure de fin doit être supérieure à l'heure de début."
     )]
     #[Groups(["getReservations"])]
-    private ?\DateTime $heureFin = null;
+    private \DateTime $heureFin;
     
     #[ORM\ManyToOne(inversedBy: 'reservationEquipements')]
     #[ORM\JoinColumn(nullable: false)]
@@ -118,12 +118,19 @@ class ReservationEquipement
     #[Groups(["getReservations"])]
     private ?Statut $Statut = null;
 
-    public function getId(): ?int
+    public function __construct()
+    {
+        $this->dateReservation = new \DateTime();
+        $this->heureDebut = new \DateTime();
+        $this->heureFin = new \DateTime();
+    }
+
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getDateReservation(): ?\DateTime
+    public function getDateReservation(): \DateTime
     {
         return $this->dateReservation;
     }
@@ -135,7 +142,7 @@ class ReservationEquipement
         return $this;
     }
 
-    public function getHeureDebut(): ?\DateTime
+    public function getHeureDebut(): \DateTime
     {
         return $this->heureDebut;
     }
@@ -147,7 +154,7 @@ class ReservationEquipement
         return $this;
     }
 
-    public function getHeureFin(): ?\DateTime
+    public function getHeureFin(): \DateTime
     {
         return $this->heureFin;
     }
@@ -164,7 +171,7 @@ class ReservationEquipement
         return $this->Statut;
     }
 
-    public function setStatut(?Statut $Statut): static
+    public function setStatut(Statut $Statut): static
     {
         $this->Statut = $Statut;
 
@@ -176,7 +183,7 @@ class ReservationEquipement
         return $this->User;
     }
 
-    public function setUser(?User $User): static
+    public function setUser(User $User): static
     {
         $this->User = $User;
 
@@ -188,7 +195,7 @@ class ReservationEquipement
         return $this->Equipement;
     }
 
-    public function setEquipement(?Equipement $Equipement): static
+    public function setEquipement(Equipement $Equipement): static
     {
         $this->Equipement = $Equipement;
 

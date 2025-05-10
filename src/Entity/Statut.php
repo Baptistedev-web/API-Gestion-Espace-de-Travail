@@ -69,7 +69,7 @@ class Statut
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(["getStatuts", "getReservations"])]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(length: 255, unique: true)]
     #[Assert\NotBlank(message: 'Le libellé ne peut pas être vide.')]
@@ -84,7 +84,7 @@ class Statut
         message: 'Le libellé ne peut contenir que des lettres (y compris avec accents) et des espaces.'
     )]
     #[Groups(["getStatuts", "getReservations"])]
-    private ?string $libelle = null;
+    private string $libelle = '';
 
     /**
      * @var Collection<int, ReservationEquipement>
@@ -111,12 +111,12 @@ class Statut
         ];
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getLibelle(): ?string
+    public function getLibelle(): string
     {
         return $this->libelle;
     }
@@ -151,7 +151,7 @@ class Statut
         if ($this->reservationEquipements->removeElement($reservationEquipement)) {
             // set the owning side to null (unless already changed)
             if ($reservationEquipement->getStatut() === $this) {
-                $reservationEquipement->setStatut(null);
+                throw new \LogicException('Impossible de supprimer le statut d\'une réservation.');
             }
         }
 

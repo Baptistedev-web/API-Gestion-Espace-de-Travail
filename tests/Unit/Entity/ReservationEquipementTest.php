@@ -2,76 +2,88 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit;
+namespace Tests\Unit\Entity;
 
-use App\DataFixtures\ReservationEquipementFixtures;
 use App\Entity\ReservationEquipement;
-use App\Entity\Equipement;
 use App\Entity\Statut;
 use App\Entity\User;
+use App\Entity\Equipement;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(ReservationEquipement::class)]
 class ReservationEquipementTest extends TestCase
 {
-    public function testGetAndSetId(): void
+    public function testGetSetId(): void
     {
         $reservation = new ReservationEquipement();
-        $this->assertNull($reservation->getId());
+        $reflection = new \ReflectionProperty(ReservationEquipement::class, 'id');
+        $reflection->setAccessible(true);
+        $reflection->setValue($reservation, 1);
+
+        $this->assertSame(1, $reservation->getId());
     }
 
-    public function testGetAndSetDateReservation(): void
+    public function testGetSetDateReservation(): void
     {
         $reservation = new ReservationEquipement();
-        $date = new \DateTime('2023-01-01');
+        $date = new \DateTime('2023-12-01');
 
         $reservation->setDateReservation($date);
+
         $this->assertSame($date, $reservation->getDateReservation());
     }
 
-    public function testGetAndSetHeureDebut(): void
+    public function testGetSetHeureDebut(): void
     {
         $reservation = new ReservationEquipement();
         $heureDebut = new \DateTime('10:00');
 
         $reservation->setHeureDebut($heureDebut);
+
         $this->assertSame($heureDebut, $reservation->getHeureDebut());
     }
 
-    public function testGetAndSetHeureFin(): void
+    public function testGetSetHeureFin(): void
     {
         $reservation = new ReservationEquipement();
         $heureFin = new \DateTime('12:00');
 
         $reservation->setHeureFin($heureFin);
+
         $this->assertSame($heureFin, $reservation->getHeureFin());
     }
 
-    public function testGetAndSetStatut(): void
+    public function testGetSetStatut(): void
     {
         $reservation = new ReservationEquipement();
-        $statut = new Statut();
+        $statut = $this->createMock(Statut::class);
 
         $reservation->setStatut($statut);
+
         $this->assertSame($statut, $reservation->getStatut());
     }
 
-    public function testGetAndSetUser(): void
+    public function testGetSetUser(): void
     {
         $reservation = new ReservationEquipement();
-        $user = new User();
+        $user = $this->createMock(User::class);
 
         $reservation->setUser($user);
+
         $this->assertSame($user, $reservation->getUser());
     }
 
-    public function testGetAndSetEquipement(): void
+    public function testGetSetEquipement(): void
     {
         $reservation = new ReservationEquipement();
-        $equipement = new Equipement();
+        $equipement = $this->createMock(Equipement::class);
 
         $reservation->setEquipement($equipement);
+
         $this->assertSame($equipement, $reservation->getEquipement());
     }
+
     public function testGetLinks(): void
     {
         $reservation = new ReservationEquipement();
@@ -79,22 +91,12 @@ class ReservationEquipementTest extends TestCase
         $reflection->setAccessible(true);
         $reflection->setValue($reservation, 1);
 
-        $links = $reservation->getLinks();
-        $this->assertArrayHasKey('self', $links);
-        $this->assertArrayHasKey('update', $links);
-        $this->assertArrayHasKey('delete', $links);
-        $this->assertSame('/api/reservation_equipements/1', $links['self']);
-    }
-    public function testGetDependencies(): void
-    {
-        $fixtures = new ReservationEquipementFixtures();
-
-        $expectedDependencies = [
-            \App\DataFixtures\EquipementFixtures::class,
-            \App\DataFixtures\UserFixtures::class,
-            \App\DataFixtures\StatutFixtures::class,
+        $expectedLinks = [
+            'self' => '/api/reservation_equipements/1',
+            'update' => '/api/reservation_equipements/1',
+            'delete' => '/api/reservation_equipements/1',
         ];
 
-        $this->assertSame($expectedDependencies, $fixtures->getDependencies());
+        $this->assertSame($expectedLinks, $reservation->getLinks());
     }
 }

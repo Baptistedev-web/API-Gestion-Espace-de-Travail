@@ -42,18 +42,14 @@ final class ReservationEquipementFactory extends PersistentProxyObjectFactory
             $dateReservation->format('Y-m-d') . ' 16:00:00'
         );
         $heureFin = (clone $heureDebut)->modify('+2 hour');
-        $users = UserFactory::randomRange(3, 12);
-        $filteredUsers = array_filter($users, fn($user) => $user->getId() !== 1 && $user->getId() !== 2);
-        $user = $filteredUsers ? $filteredUsers[array_rand($filteredUsers)] : null;
-
 
         return [
+            'user' => UserFactory::randomOrCreate(),
+            'equipement' => EquipementFactory::randomOrCreate(),
             'dateReservation' => $dateReservation,
             'heureDebut' => $heureDebut,
             'heureFin' => $heureFin,
-            'equipement' => EquipementFactory::random(),
             'statut' => StatutFactory::random(),
-            'user' => $user,
         ];
     }
 

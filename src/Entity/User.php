@@ -67,13 +67,13 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
-     * @var int|null Géré automatiquement par Doctrine
+     * @var int Géré automatiquement par Doctrine
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(["getUsers", "getReservations"])]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Assert\NotBlank(message: "L'email ne doit pas être vide.")]
@@ -82,7 +82,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         message: "L'adresse e-mail {{ value }} n'est pas valide."
     )]
     #[Groups(["getUsers", "getReservations"])]
-    private ?string $email = null;
+    private string $email = '';
     
     /**
      * @var list<string> The user roles
@@ -107,7 +107,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         message: "Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial."
     )]
     #[Groups(["getUsers"])]
-    private ?string $password = null;
+    private string $password = '';
     
     /**
      * @var string|null Plain password for validation and hash
@@ -129,7 +129,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         message: "Le nom de famille ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets."
     )]
     #[Groups(["getUsers", "getReservations"])]
-    private ?string $nom = null;
+    private string $nom = '';
     
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: "Le prénom ne doit pas être vide.")]
@@ -144,7 +144,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         message: "Le prénom ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets."
     )]
     #[Groups(["getUsers", "getReservations"])]
-    private ?string $prenom = null;
+    private string $prenom = '';
 
     /**
      * @var Collection<int, ReservationEquipement>
@@ -158,12 +158,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reservationEquipements = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getEmail(): ?string
+    public function getEmail(): string
     {
         return $this->email;
     }
@@ -182,7 +182,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return $this->email;
+        return $this->email ?: throw new \LogicException("L'identifiant utilisateur ne peut pas être vide.");
     }
     /**
      * Méthode getUsername qui permet de retourner le champ qui est utilisé pour l'authentification
@@ -221,7 +221,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see PasswordAuthenticatedUserInterface
      */
-    public function getPassword(): ?string
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -255,7 +255,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->plainPassword = null;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -267,7 +267,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getPrenom(): ?string
+    public function getPrenom(): string
     {
         return $this->prenom;
     }
@@ -315,7 +315,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->reservationEquipements->removeElement($reservationEquipement)) {
             // set the owning side to null (unless already changed)
             if ($reservationEquipement->getUser() === $this) {
-                $reservationEquipement->setUser(null);
+                throw new \LogicException("Impossible de supprimer l'utilisateur d'une réservation.");
             }
         }
 

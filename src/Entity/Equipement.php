@@ -67,13 +67,13 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 class Equipement
 {
     /**
-     * @var int|null Géré automatiquement par Doctrine
+     * @var int Géré automatiquement par Doctrine
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(["getEquipements", "getReservations"])]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le nom ne doit pas être vide.')]
@@ -88,7 +88,7 @@ class Equipement
         message: 'Le nom ne doit contenir que des lettres (y compris avec accents), des chiffres et des espaces.'
     )]
     #[Groups(["getEquipements", "getReservations"])]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'La description ne doit pas être vide.')]
@@ -103,7 +103,7 @@ class Equipement
         message: 'La description ne doit contenir que des lettres (y compris avec accents), des chiffres et des espaces.'
     )]
     #[Groups(["getEquipements", "getReservations"])]
-    private ?string $description = null;
+    private string $description = '';
 
     /**
      * @var Collection<int, ReservationEquipement>
@@ -117,12 +117,12 @@ class Equipement
         $this->reservationEquipements = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -134,7 +134,7 @@ class Equipement
         return $this;
     }
 
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -180,10 +180,11 @@ class Equipement
     public function removeReservationEquipement(ReservationEquipement $reservationEquipement): static
     {
         if ($this->reservationEquipements->removeElement($reservationEquipement)) {
-            // set the owning side to null (unless already changed)
-            if ($reservationEquipement->getEquipement() === $this) {
-                $reservationEquipement->setEquipement(null);
-            }
+            // Ne pas tenter de définir l'équipement à null car ReservationEquipement attend une instance d'Equipement
+            // Ce code est commenté car il provoquerait une erreur de type
+            // if ($reservationEquipement->getEquipement() === $this) {
+            //     $reservationEquipement->setEquipement(null);
+            // }
         }
 
         return $this;

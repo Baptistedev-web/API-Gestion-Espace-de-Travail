@@ -39,7 +39,7 @@ class UserDataPersister implements ProcessorInterface
         }
 
         // Si l'utilisateur est nouveau, on définit les rôles et hash le mot de passe
-        if (null === $data->getId()) {
+        if (!$data->getId()) {
             $data->setRoles(['ROLE_USER']);
         }
 
