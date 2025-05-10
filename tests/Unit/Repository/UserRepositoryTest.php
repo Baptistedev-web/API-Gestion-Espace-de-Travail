@@ -9,9 +9,11 @@ use App\Repository\UserRepository;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 
+#[CoversClass(UserRepository::class)]
 class UserRepositoryTest extends TestCase
 {
     public function testUpgradePassword(): void

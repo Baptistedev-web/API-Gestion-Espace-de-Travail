@@ -55,4 +55,25 @@ class BureauTest extends TestCase
 
         $this->assertSame($expectedLinks, $bureau->getLinks());
     }
+    public function testIsDisponibleEnPermanent(): void
+    {
+        $typeBureau = $this->createMock(TypeBureau::class);
+        $bureau = new Bureau($typeBureau);
+
+        $bureau->setDisponibleEnPermanent(true);
+        $this->assertTrue($bureau->isDisponibleEnPermanent());
+
+        $bureau->setDisponibleEnPermanent(false);
+        $this->assertFalse($bureau->isDisponibleEnPermanent());
+    }
+    public function testSetTypeBureau(): void
+    {
+        $typeBureau1 = $this->createMock(TypeBureau::class);
+        $typeBureau2 = $this->createMock(TypeBureau::class);
+        $bureau = new Bureau($typeBureau1);
+
+        $bureau->setTypeBureau($typeBureau2);
+
+        $this->assertSame($typeBureau2, $bureau->getTypeBureau());
+    }
 }

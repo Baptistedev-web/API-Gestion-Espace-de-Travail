@@ -69,5 +69,18 @@ class TypeBureauTest extends TestCase
 
         $this->assertSame($expectedLinks, $typeBureau->getLinks());
     }
+    public function testRemoveBureauThrowsException(): void
+    {
+        $typeBureau = new TypeBureau();
+        $bureau = $this->createMock(Bureau::class);
+
+        $bureau->method('getTypeBureau')->willReturn($typeBureau);
+        $typeBureau->addBureau($bureau);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Impossible de supprimer le type de bureau car il est encore utilisé par un bureau.');
+
+        $typeBureau->removeBureau($bureau);
+    }
 }
 

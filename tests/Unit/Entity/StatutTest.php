@@ -72,4 +72,17 @@ class StatutTest extends TestCase
 
         $this->assertSame($expectedLinks, $statut->getLinks());
     }
+    public function testRemoveReservationEquipementThrowsException(): void
+    {
+        $statut = new Statut();
+        $reservationEquipement = $this->createMock(ReservationEquipement::class);
+
+        $reservationEquipement->method('getStatut')->willReturn($statut);
+        $statut->addReservationEquipement($reservationEquipement);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Impossible de supprimer le statut d\'une réservation.');
+
+        $statut->removeReservationEquipement($reservationEquipement);
+    }
 }

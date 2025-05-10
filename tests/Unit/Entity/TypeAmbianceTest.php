@@ -72,4 +72,17 @@ class TypeAmbianceTest extends TestCase
 
         $this->assertSame($expectedLinks, $typeAmbiance->getLinks());
     }
+    public function testRemoveEspaceCollaborationThrowsException(): void
+    {
+        $typeAmbiance = new TypeAmbiance();
+        $espaceCollaboration = $this->createMock(EspaceCollaboration::class);
+
+        $espaceCollaboration->method('getTypeAmbiance')->willReturn($typeAmbiance);
+        $typeAmbiance->addEspaceCollaboration($espaceCollaboration);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Impossible de supprimer l\'espace de collaboration car il est encore référencé.');
+
+        $typeAmbiance->removeEspaceCollaboration($espaceCollaboration);
+    }
 }

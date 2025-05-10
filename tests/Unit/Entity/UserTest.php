@@ -117,5 +117,34 @@ class UserTest extends TestCase
 
         $this->assertSame($email, $user->getUserIdentifier());
     }
+    public function testGetLinks(): void
+    {
+        $user = new User();
+        $reflection = new \ReflectionClass($user);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($user, 1);
+
+        $expectedLinks = [
+            'self' => '/api/users/1',
+            'update' => '/api/users/1',
+            'delete' => '/api/users/1',
+        ];
+
+        $this->assertSame($expectedLinks, $user->getLinks());
+    }
+    public function testRemoveReservationEquipementThrowsException(): void
+    {
+        $user = new User();
+        $reservation = $this->createMock(ReservationEquipement::class);
+        $reservation->method('getUser')->willReturn($user);
+
+        $user->addReservationEquipement($reservation);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Impossible de supprimer l'utilisateur d'une réservation.");
+
+        $user->removeReservationEquipement($reservation);
+    }
 }
 
