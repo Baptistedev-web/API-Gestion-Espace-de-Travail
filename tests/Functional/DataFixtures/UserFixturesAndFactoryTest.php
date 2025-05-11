@@ -9,12 +9,11 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Foundry\Test\ResetDatabase;
 use Zenstruck\Foundry\Story;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 
-#[CoversClass(
-    UserFixtures::class,
-    UserFactory::class
-)]
+#[CoversClass(UserFixtures::class)]
+#[CoversClass(UserFactory::class)]
 class UserFixturesAndFactoryTest extends KernelTestCase
 {
     use Factories;
@@ -26,8 +25,10 @@ class UserFixturesAndFactoryTest extends KernelTestCase
 
         self::bootKernel();
         UserFactory::repository()->truncate();
-        $userFixtures = new UserFixtures(self::getContainer()->get('security.user_password_hasher'));
-        $userFixtures->load(self::getContainer()->get('doctrine')->getManager());
+        $userPasswordHasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        $userFixtures = new UserFixtures($userPasswordHasher);
+        $userFixtures->load($entityManager);
     }
     public function testUserFixtures(): void
     {
