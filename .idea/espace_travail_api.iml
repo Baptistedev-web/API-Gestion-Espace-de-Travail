@@ -211,6 +211,8 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/phpdocumentor 2/type-resolver" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/psr 2/log" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/webmozart 2/assert" />
+      <excludeFolder url="file://$MODULE_DIR$/public/bundles" />
+      <excludeFolder url="file://$MODULE_DIR$/var" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
