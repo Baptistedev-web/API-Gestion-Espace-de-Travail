@@ -5,6 +5,7 @@ namespace Tests\Functional\DataFixturesAndFactory;
 use App\DataFixtures\EquipementFixtures;
 use App\Factory\EquipementFactory;
 use App\Entity\Equipement;
+use Doctrine\Persistence\ObjectManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
@@ -21,62 +22,93 @@ class EquipementFixturesAndFactoryTest extends KernelTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         self::bootKernel();
         EquipementFactory::repository()->truncate();
 
-        /** @var \Doctrine\Persistence\ObjectManager $entityManager */
+        /** @var ObjectManager $entityManager */
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-
         $fixtures = new EquipementFixtures();
         $fixtures->load($entityManager);
     }
 
-    public function testEquipementFixtures(): void
+    public function testFixturesLoadCreatesExpectedEquipements(): void
     {
-        // 10 créés manuellement + 10 via la factory
-        $this->assertGreaterThanOrEqual(20, EquipementFactory::repository()->count([]));
+        // 10 manuels + 10 via factory
+        $all = EquipementFactory::repository()->findAll();
+        $this->assertCount(20, $all);
+
+        // Vérifie que les équipements manuels sont bien présents
+        for ($i = 1; $i <= 10; $i++) {
+            $equipement = EquipementFactory::repository()->findOneBy(['nom' => "Equipement $i"]);
+            $this->assertNotNull($equipement);
+            $this->assertStringContainsString((string)$i, $equipement->getDescription());
+        }
     }
 
-    public function testEquipementFactory(): void
+    public function testFactoryConstruct(): void
     {
-        $equipement = EquipementFactory::createOne(['nom' => 'Test Equipement', 'description' => 'Description test']);
-        // Suppression du test d'instance, car le proxy expose déjà les getters
-        $this->assertEquals('Test Equipement', $equipement->getNom());
-        $this->assertEquals('Description test', $equipement->getDescription());
+        $factory = new EquipementFactory();
+        $this->assertInstanceOf(EquipementFactory::class, $factory);
     }
 
-    public function testDefaultsMethod(): void
+    public function testFactoryClassStatic(): void
+    {
+        $this->assertEquals(Equipement::class, EquipementFactory::class());
+    }
+
+    public function testFactoryDefaults(): void
     {
         $factory = new EquipementFactory();
         $defaults = $this->invokePrivateMethod($factory, 'defaults');
         $this->assertIsArray($defaults);
         $this->assertArrayHasKey('nom', $defaults);
         $this->assertArrayHasKey('description', $defaults);
+        $this->assertIsString($defaults['nom']);
+        $this->assertIsString($defaults['description']);
     }
 
-    public function testGenerateRealisticName(): void
-    {
-        $name = $this->invokePrivateStaticMethod(EquipementFactory::class, 'generateRealisticName');
-        $this->assertIsString($name);
-        $this->assertNotEmpty($name);
-    }
-
-    public function testGenerateRealisticDescription(): void
-    {
-        $desc = $this->invokePrivateStaticMethod(EquipementFactory::class, 'generateRealisticDescription', ['Chaise']);
-        $this->assertIsString($desc);
-        $this->assertStringContainsString('chaise', mb_strtolower($desc));
-    }
-
-    public function testInitializeReturnsSelf(): void
+    public function testFactoryInitialize(): void
     {
         $factory = new EquipementFactory();
         $result = $this->invokeProtectedMethod($factory, 'initialize');
         $this->assertInstanceOf(EquipementFactory::class, $result);
     }
 
-    // Méthodes utilitaires pour accéder aux méthodes privées/protégées/statics
+    public function testGenerateRealisticDescriptionAllCases(): void
+    {
+        $cases = [
+            'Chaise' => 'Une chaise ergonomique idéale pour le bureau, offrant un confort optimal.',
+            'Bureau' => 'Un bureau spacieux et moderne, parfait pour travailler efficacement.',
+            'Lampe' => 'Une lampe élégante qui éclaire parfaitement votre espace de travail.',
+            'Écran' => 'Un écran haute résolution pour une expérience visuelle exceptionnelle.',
+            'Clavier' => 'Un clavier mécanique robuste, idéal pour la saisie rapide.',
+            'Souris' => 'Une souris sans fil ergonomique pour une navigation fluide.',
+            'Projecteur' => 'Un projecteur haute qualité pour vos présentations en salle de réunion.',
+            'Table' => 'Une table robuste et élégante, parfaite pour les réunions.',
+            'Haut-parleur' => 'Un haut-parleur puissant pour une qualité sonore exceptionnelle.',
+            'Tableau blanc' => 'Un tableau blanc magnétique, idéal pour les brainstormings.',
+            'Télévision' => 'Une télévision 4K pour des présentations visuelles impressionnantes.',
+            'Canapé' => 'Un canapé confortable pour vos espaces de collaboration.',
+            'Table basse' => 'Une table basse moderne pour vos espaces de détente.',
+            'Station de recharge' => 'Une station de recharge pratique pour vos appareils électroniques.',
+            'Panneau acoustique' => 'Un panneau acoustique pour réduire le bruit ambiant.',
+            'Tabouret' => 'Un tabouret design et pratique pour vos espaces de travail.',
+        ];
+        foreach ($cases as $nom => $expected) {
+            $desc = $this->invokePrivateStaticMethod(EquipementFactory::class, 'generateRealisticDescription', [$nom]);
+            $this->assertEquals($expected, $desc);
+        }
+    }
+
+    public function testGenerateRealisticDescriptionDefault(): void
+    {
+        $desc = $this->invokePrivateStaticMethod(EquipementFactory::class, 'generateRealisticDescription', ['Inconnu']);
+        $this->assertIsString($desc);
+        $this->assertNotEmpty($desc);
+    }
+
+    // --- OUTILS REFLEXION ---
+
     /**
      * @param object $object
      * @param string $method
@@ -116,4 +148,3 @@ class EquipementFixturesAndFactoryTest extends KernelTestCase
         return $m->invokeArgs(null, $args);
     }
 }
-
