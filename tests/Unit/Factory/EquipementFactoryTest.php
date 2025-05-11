@@ -19,17 +19,15 @@ class EquipementFactoryTestUtil
             $category = 'Équipement générique';
         }
 
-        switch ($category) {
-            case 'Bureau':
-            case 'Salle de réunion':
-            case 'Espace de collaboration':
-                // $name reste tel quel
-                break;
-            default:
-                $name = 'Équipement générique';
-        }
+        $name = match ($category) {
+            'Bureau' => $name ?? 'Chaise',
+            'Salle de réunion' => $name ?? 'Projecteur',
+            'Espace de collaboration' => $name ?? 'Canapé',
+            default => 'Équipement générique',
+        };
 
-        return is_string($name) && $name !== '' ? $name : 'Équipement générique';
+        // Suppression du test is_string inutile (le match retourne toujours une string)
+        return $name !== '' ? $name : 'Équipement générique';
     }
 
     /**
@@ -49,6 +47,7 @@ class EquipementFactoryTest extends TestCase
 {
     public function testGenerateRealisticNameWithNonStringCategory(): void
     {
+        // Couvre la ligne 66
         $category = null;
         $name = 'Chaise';
         $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
@@ -57,6 +56,7 @@ class EquipementFactoryTest extends TestCase
 
     public function testGenerateRealisticNameWithUnknownCategory(): void
     {
+        // Couvre la ligne 73 (default du match)
         $category = 'Inconnue';
         $name = 'Chaise';
         $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
@@ -68,7 +68,7 @@ class EquipementFactoryTest extends TestCase
         $category = 'Bureau';
         $name = null;
         $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
-        $this->assertSame('Équipement générique', $result);
+        $this->assertSame('Chaise', $result);
     }
 
     public function testGenerateRealisticNameWithValidCategory(): void
