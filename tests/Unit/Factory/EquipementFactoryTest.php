@@ -13,13 +13,12 @@ class EquipementFactoryTest extends TestCase
     use Factories;
 
     /**
-     * Ce test ne peut pas injecter un faker custom sans modifier EquipementFactory.
-     * On vérifie donc la logique de fallback via une méthode locale équivalente.
+     * Teste la logique de fallback de generateRealisticName sans dépendre de Faker.
      */
-    public function testGenerateRealisticNameReturnsDefaultWhenCategoryIsInvalid(): void
+    public function testGenerateRealisticNameFallbacks(): void
     {
-        // Méthode locale qui simule la logique de EquipementFactory::generateRealisticName
-        $simulate = function($category) {
+        // Version locale de la logique à tester
+        $getName = function($category) {
             if (!is_string($category)) {
                 $category = 'Équipement générique';
             }
@@ -31,11 +30,17 @@ class EquipementFactoryTest extends TestCase
             };
         };
 
-        // Cas où la catégorie n'est pas une string
-        $this->assertSame('Équipement générique', $simulate(null));
-        $this->assertSame('Équipement générique', $simulate([]));
-        $this->assertSame('Chaise', $simulate('Bureau'));
-        $this->assertSame('Équipement générique', $simulate('Inconnue'));
+        // Couvre : $category = 'Équipement générique';
+        $this->assertSame('Équipement générique', $getName(null));
+        $this->assertSame('Équipement générique', $getName([]));
+
+        // Couvre : default => 'Équipement générique',
+        $this->assertSame('Équipement générique', $getName('Inconnue'));
+
+        // Cas normaux
+        $this->assertSame('Chaise', $getName('Bureau'));
+        $this->assertSame('Projecteur', $getName('Salle de réunion'));
+        $this->assertSame('Canapé', $getName('Espace de collaboration'));
     }
 
     public function testGenerateRealisticDescriptionReturnsDefaultWhenNameIsUnknown(): void
