@@ -26,7 +26,6 @@ class EquipementFactoryTestUtil
             default => 'Équipement générique',
         };
 
-        // Suppression du test is_string inutile (le match retourne toujours une string)
         return $name !== '' ? $name : 'Équipement générique';
     }
 
@@ -65,6 +64,7 @@ class EquipementFactoryTest extends TestCase
 
     public function testGenerateRealisticNameWithNonStringName(): void
     {
+        // Couvre le cas où le nom n'est pas une chaîne, mais la catégorie est valide
         $category = 'Bureau';
         $name = null;
         $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
@@ -93,6 +93,15 @@ class EquipementFactoryTest extends TestCase
         $defaultDescription = 'Description générique générée pour un équipement inconnu.';
         $result = EquipementFactoryTestUtil::generateRealisticDescriptionTest($nom, $defaultDescription);
         $this->assertSame($defaultDescription, $result);
+    }
+
+    public function testGenerateRealisticNameWithNonStringCategoryAndUnknownCategory(): void
+    {
+        // Couvre à la fois la ligne 66 et le default du match (ligne 73)
+        $category = [];
+        $name = 'Test';
+        $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
+        $this->assertSame('Équipement générique', $result);
     }
 }
 
