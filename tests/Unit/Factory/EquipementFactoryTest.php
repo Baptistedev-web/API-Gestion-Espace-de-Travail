@@ -6,18 +6,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use App\Factory\EquipementFactory;
 
-#[CoversClass(EquipementFactory::class)]
-class EquipementFactoryTest extends TestCase
+class EquipementFactoryTestUtil
 {
     /**
-     * Classe utilitaire pour tester la logique privée de EquipementFactory.
+     * Simule la logique de generateRealisticName pour les tests unitaires.
      * @param string|int|array<mixed>|null $category
      * @param string|null $name
      */
-    private static function generateRealisticNameTest(string|int|array|null $category = null, string|null $name = null): string
+    public static function generateRealisticNameTest(string|int|array|null $category, string|null $name): string
     {
         if (!is_string($category)) {
-            $category = 'Équipement générique'; // Couvre ligne 66
+            $category = 'Équipement générique';
         }
 
         switch ($category) {
@@ -27,41 +26,48 @@ class EquipementFactoryTest extends TestCase
                 // $name reste tel quel
                 break;
             default:
-                $name = 'Équipement générique'; // Couvre ligne 73
+                $name = 'Équipement générique';
         }
 
         return is_string($name) && $name !== '' ? $name : 'Équipement générique';
     }
 
-    private static function generateRealisticDescriptionTest(string $nom, string $defaultDescription): string
+    /**
+     * Simule la logique de generateRealisticDescription pour les tests unitaires.
+     */
+    public static function generateRealisticDescriptionTest(string $nom, string $defaultDescription): string
     {
         return match ($nom) {
             'Chaise' => 'Une chaise ergonomique idéale pour le bureau, offrant un confort optimal.',
             default => $defaultDescription,
         };
     }
+}
 
+#[CoversClass(EquipementFactory::class)]
+class EquipementFactoryTest extends TestCase
+{
     public function testGenerateRealisticNameWithNonStringCategory(): void
     {
-        $category = null; // Catégorie non valide
+        $category = null;
         $name = 'Chaise';
-        $result = self::generateRealisticNameTest($category, $name);
+        $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
         $this->assertSame('Équipement générique', $result);
     }
 
     public function testGenerateRealisticNameWithUnknownCategory(): void
     {
-        $category = 'Inconnue'; // Catégorie inconnue
+        $category = 'Inconnue';
         $name = 'Chaise';
-        $result = self::generateRealisticNameTest($category, $name);
+        $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
         $this->assertSame('Équipement générique', $result);
     }
 
     public function testGenerateRealisticNameWithNonStringName(): void
     {
         $category = 'Bureau';
-        $name = null; // Nom non valide
-        $result = self::generateRealisticNameTest($category, $name);
+        $name = null;
+        $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
         $this->assertSame('Équipement générique', $result);
     }
 
@@ -69,7 +75,7 @@ class EquipementFactoryTest extends TestCase
     {
         $category = 'Bureau';
         $name = 'Chaise';
-        $result = self::generateRealisticNameTest($category, $name);
+        $result = EquipementFactoryTestUtil::generateRealisticNameTest($category, $name);
         $this->assertSame('Chaise', $result);
     }
 
@@ -77,7 +83,7 @@ class EquipementFactoryTest extends TestCase
     {
         $nom = 'Chaise';
         $defaultDescription = 'Description générique générée pour un équipement inconnu.';
-        $result = self::generateRealisticDescriptionTest($nom, $defaultDescription);
+        $result = EquipementFactoryTestUtil::generateRealisticDescriptionTest($nom, $defaultDescription);
         $this->assertSame('Une chaise ergonomique idéale pour le bureau, offrant un confort optimal.', $result);
     }
 
@@ -85,7 +91,7 @@ class EquipementFactoryTest extends TestCase
     {
         $nom = 'Nom inconnu';
         $defaultDescription = 'Description générique générée pour un équipement inconnu.';
-        $result = self::generateRealisticDescriptionTest($nom, $defaultDescription);
+        $result = EquipementFactoryTestUtil::generateRealisticDescriptionTest($nom, $defaultDescription);
         $this->assertSame($defaultDescription, $result);
     }
 }
