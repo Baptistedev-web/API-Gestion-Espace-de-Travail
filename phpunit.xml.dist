@@ -18,6 +18,9 @@
     <testsuite name="Unit Tests">
       <directory suffix="Test.php">tests/Unit</directory>
     </testsuite>
+    <testsuite name="Functional Tests">
+      <directory suffix="Test.php">tests/Functional</directory>
+    </testsuite>
   </testsuites>
   <source>
     <include>
