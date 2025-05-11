@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Functional\DataFixtures;
+namespace Tests\Functional\DataFixturesAndFactory;
 
 use App\DataFixtures\UserFixtures;
 use App\Factory\UserFactory;
@@ -25,8 +25,13 @@ class UserFixturesAndFactoryTest extends KernelTestCase
 
         self::bootKernel();
         UserFactory::repository()->truncate();
+
+        /** @var UserPasswordHasherInterface $userPasswordHasher */
         $userPasswordHasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+
+        /** @var \Doctrine\Persistence\ObjectManager $entityManager */
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+
         $userFixtures = new UserFixtures($userPasswordHasher);
         $userFixtures->load($entityManager);
     }
