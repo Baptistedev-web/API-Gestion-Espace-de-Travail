@@ -107,6 +107,16 @@ class UserTest extends TestCase
 
         $user->removeReservationEspace($reservation);
     }
+
+    public function testRemoveReservationEspaceReturnsThisIfNotPresent(): void
+    {
+        $user = new User();
+        $reservation = $this->createMock(ReservationEspace::class);
+
+        // La réservation n'est pas ajoutée, donc remove doit juste retourner $this sans exception
+        $result = $user->removeReservationEspace($reservation);
+        $this->assertSame($user, $result);
+    }
     public function testSetAndGetPlainPassword(): void
     {
         $user = new User();
@@ -171,4 +181,3 @@ class UserTest extends TestCase
         $user->removeReservationEquipement($reservation);
     }
 }
-

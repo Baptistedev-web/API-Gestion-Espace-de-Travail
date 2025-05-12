@@ -21,7 +21,6 @@ class EspaceTravailTest extends TestCase
 
         $this->assertSame(1, $espaceTravail->getId());
     }
-
     public function testGetSetNom(): void
     {
         $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
@@ -29,7 +28,6 @@ class EspaceTravailTest extends TestCase
 
         $this->assertSame('Nouveau Nom', $espaceTravail->getNom());
     }
-
     public function testGetSetDescription(): void
     {
         $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
@@ -37,7 +35,6 @@ class EspaceTravailTest extends TestCase
 
         $this->assertSame('Nouvelle Description', $espaceTravail->getDescription());
     }
-
     public function testGetSetCapacite(): void
     {
         $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
@@ -45,7 +42,6 @@ class EspaceTravailTest extends TestCase
 
         $this->assertSame(20, $espaceTravail->getCapacite());
     }
-
     public function testGetLinks(): void
     {
         $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
@@ -61,7 +57,6 @@ class EspaceTravailTest extends TestCase
 
         $this->assertSame($expectedLinks, $espaceTravail->getLinks());
     }
-
     public function testAddAndRemoveReservationEspace(): void
     {
         $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
@@ -85,5 +80,13 @@ class EspaceTravailTest extends TestCase
 
         $espaceTravail->removeReservationEspace($reservation);
     }
-}
+    public function testRemoveReservationEspaceReturnsThisIfNotPresent(): void
+    {
+        $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
+        $reservation = $this->createMock(ReservationEspace::class);
 
+        // La réservation n'est pas ajoutée, donc remove doit juste retourner $this sans exception
+        $result = $espaceTravail->removeReservationEspace($reservation);
+        $this->assertSame($espaceTravail, $result);
+    }
+}

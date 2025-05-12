@@ -84,6 +84,16 @@ class StatutTest extends TestCase
         $this->assertCount(0, $statut->getReservationEspaces());
     }
 
+    public function testRemoveReservationEspaceReturnsThisIfNotPresent(): void
+    {
+        $statut = new Statut();
+        $reservationEspace = $this->createMock(ReservationEspace::class);
+
+        // La réservation n'est pas ajoutée, donc remove doit juste retourner $this sans exception
+        $result = $statut->removeReservationEspace($reservationEspace);
+        $this->assertSame($statut, $result);
+    }
+
     public function testGetLinks(): void
     {
         $statut = new Statut();
@@ -113,4 +123,3 @@ class StatutTest extends TestCase
         $statut->removeReservationEquipement($reservationEquipement);
     }
 }
-
