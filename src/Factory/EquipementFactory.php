@@ -55,38 +55,21 @@ class EquipementFactory extends PersistentProxyObjectFactory
     /**
      * Génère un nom réaliste pour un équipement en fonction de la catégorie.
      *
-     * @param string|null $category
      * @return string
      */
-    private static function generateRealisticName(?string $category = null): string
+    private static function generateRealisticName(): string
     {
         $faker = self::faker();
-        if ($category === null) {
-            $category = $faker->randomElement(['Bureau', 'Salle de réunion', 'Espace de collaboration']);
-        }
+        $category = $faker->randomElement(['Bureau', 'Salle de réunion', 'Espace de collaboration']);
 
+        /** @phpstan-ignore-next-line */
         $name = match ($category) {
             'Bureau' => $faker->randomElement(['Chaise', 'Bureau', 'Lampe', 'Écran', 'Clavier', 'Souris']),
             'Salle de réunion' => $faker->randomElement(['Projecteur', 'Table', 'Haut-parleur', 'Tableau blanc', 'Télévision']),
             'Espace de collaboration' => $faker->randomElement(['Canapé', 'Table basse', 'Station de recharge', 'Panneau acoustique', 'Tabouret']),
-            default => 'Équipement générique',
         };
 
         return is_string($name) ? $name : 'Équipement générique';
-    }
-
-    /**
-     * Permet de tester la logique du match sans dépendre de Foundry.
-     * @internal uniquement pour les tests unitaires
-     */
-    protected static function matchCategoryName(string $category): string
-    {
-        return match ($category) {
-            'Bureau' => 'bureau-test',
-            'Salle de réunion' => 'reunion-test',
-            'Espace de collaboration' => 'collab-test',
-            default => 'Équipement générique',
-        };
     }
 
     /**
