@@ -6,6 +6,7 @@ namespace Tests\Unit\Entity;
 
 use App\Entity\User;
 use App\Entity\ReservationEquipement;
+use App\Entity\ReservationEspace;
 use PHPUnit\Framework\Attributes\CoversClass; // Correction de l'import
 use PHPUnit\Framework\TestCase;
 
@@ -82,6 +83,29 @@ class UserTest extends TestCase
         $user->removeReservationEquipement($reservation);
 
         $this->assertCount(0, $user->getReservationEquipements());
+    }
+    public function testAddAndRemoveReservationEspace(): void
+    {
+        $user = new User();
+        $reservation = $this->createMock(ReservationEspace::class);
+
+        $reservation->expects($this->once())
+            ->method('setUser')
+            ->with($user);
+
+        $user->addReservationEspace($reservation);
+
+        $this->assertCount(1, $user->getReservationEspaces());
+        $this->assertTrue($user->getReservationEspaces()->contains($reservation));
+
+        $reservation->expects($this->once())
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Impossible de supprimer l'utilisateur d'une réservation.");
+
+        $user->removeReservationEspace($reservation);
     }
     public function testSetAndGetPlainPassword(): void
     {

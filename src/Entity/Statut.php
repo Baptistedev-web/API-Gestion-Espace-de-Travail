@@ -68,7 +68,7 @@ class Statut
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getStatuts", "getReservations"])]
+    #[Groups(["getStatuts", "getReservations","getReservationsEspaces"])]
     private int $id = 0;
 
     #[ORM\Column(length: 255, unique: true)]
@@ -83,7 +83,7 @@ class Statut
         pattern: '/^[\p{L}\s]+$/u',
         message: 'Le libellé ne peut contenir que des lettres (y compris avec accents) et des espaces.'
     )]
-    #[Groups(["getStatuts", "getReservations"])]
+    #[Groups(["getStatuts", "getReservations","getReservationsEspaces"])]
     private string $libelle = '';
 
     /**
@@ -93,9 +93,17 @@ class Statut
     #[Groups(["getStatuts"])]
     private Collection $reservationEquipements;
 
+    /**
+     * @var Collection<int, ReservationEspace>
+     */
+    #[ORM\OneToMany(targetEntity: ReservationEspace::class, mappedBy: 'Statut', orphanRemoval: true)]
+    #[Groups(["getStatuts"])]
+    private Collection $reservationEspaces;
+
     public function __construct()
     {
         $this->reservationEquipements = new ArrayCollection();
+        $this->reservationEspaces = new ArrayCollection();
     }
 
     /**
@@ -157,4 +165,35 @@ class Statut
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, ReservationEspace>
+     */
+    public function getReservationEspaces(): Collection
+    {
+        return $this->reservationEspaces;
+    }
+
+    public function addReservationEspace(ReservationEspace $reservationEspace): static
+    {
+        if (!$this->reservationEspaces->contains($reservationEspace)) {
+            $this->reservationEspaces->add($reservationEspace);
+            $reservationEspace->setStatut($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservationEspace(ReservationEspace $reservationEspace): static
+    {
+        if ($this->reservationEspaces->removeElement($reservationEspace)) {
+            // set the owning side to null (unless already changed)
+            if ($reservationEspace->getStatut() === $this) {
+                throw new \LogicException('Impossible de supprimer le statut d\'une réservation.');
+            }
+        }
+
+        return $this;
+    }
 }
+

@@ -11,51 +11,50 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Link;
-use App\Repository\ReservationEquipementRepository;
+use App\Repository\ReservationEspaceRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\UniqueConstraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: ReservationEquipementRepository::class)]
+#[ORM\Entity(repositoryClass: ReservationEspaceRepository::class)]
 #[ORM\UniqueConstraint(
-    name: "reservation_unique",
-    columns: ["user_id", "equipement_id", "date_reservation", "heure_debut"]
+    name: "reservation_espace_unique",
+    columns: ["user_id", "espace_travail_id", "date_reservation", "heure_debut"]
 )]
 #[ApiResource(
     paginationItemsPerPage: 10,
     paginationMaximumItemsPerPage: 100,
-    normalizationContext: ['groups' => ['getReservations']],
-    denormalizationContext: ['groups' => ['getReservations']],
+    normalizationContext: ['groups' => ['getReservationsEspaces']],
+    denormalizationContext: ['groups' => ['getReservationsEspaces']],
     operations: [
         new GetCollection(
-            description: "Récupère une collection de ressources Réservation d'Équipement.",
-            normalizationContext: ['groups' => ['getReservations']],
+            description: "Récupère une collection de ressources Réservation d'Espace.",
+            normalizationContext: ['groups' => ['getReservationsEspaces']],
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: "Vous devez être administrateur pour accéder à cette ressource.",
         ),
         new Get(
-            description: "Récupère une ressource Réservation d'Équipement.",
-            normalizationContext: ['groups' => ['getReservations']],
+            description: "Récupère une ressource Réservation d'Espace.",
+            normalizationContext: ['groups' => ['getReservationsEspaces']],
             security: "is_granted('ROLE_USER') and object.getUser() == user",
             securityMessage: "Vous ne pouvez accéder qu'à vos propres réservations."
         ),
         new Post(
-            description: "Crée une ressource Réservation d'Équipement.",
-            denormalizationContext: ['groups' => ['getReservations']],
+            description: "Crée une ressource Réservation d'Espace.",
+            denormalizationContext: ['groups' => ['getReservationsEspaces']],
             security: "is_granted('ROLE_USER')"
         ),
         new Put(
-            description: "Remplace la ressource Réservation d'Équipement.",
-            denormalizationContext: ['groups' => ['getReservations']],
+            description: "Remplace la ressource Réservation d'Espace.",
+            denormalizationContext: ['groups' => ['getReservationsEspaces']],
             security: "is_granted('ROLE_USER') and object.getUser() == user",
             securityMessage: "Vous ne pouvez modifier que vos propres réservations.",
-
         ),
         new Delete(
-            description: "Supprime la ressource Réservation d'Équipement.",
-            security: "is_granted('ROLE_USER') and object.getUSer() == user",
+            description: "Supprime la ressource Réservation d'Espace.",
+            security: "is_granted('ROLE_USER') and object.getUser() == user",
         ),
     ],
     formats: ['jsonld', 'json'],
@@ -65,58 +64,58 @@ use Symfony\Component\Serializer\Annotation\Groups;
         'vary' => ['Authorization', 'Accept-Language'],
     ],
 )]
-class ReservationEquipement
+class ReservationEspace
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(["getReservations"])]
+    #[Groups(['getReservationsEspaces'])]
     private int $id = 0;
 
-    #[ORM\ManyToOne(inversedBy: 'reservationEquipements')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull(message: "L'utilisateur ne doit pas être null.")]
-    #[Groups(["getReservations"])]
-    private ?User $User = null;
-    
-    #[ORM\ManyToOne(inversedBy: 'reservationEquipements')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull(message: "L'équipement ne doit pas être null.")]
-    #[Groups(["getReservations"])]
-    private ?Equipement $Equipement = null;
-    
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Assert\NotNull(message: "La date de réservation ne doit pas être vide.")]
     #[Assert\GreaterThanOrEqual(
         "today",
         message: "La date de réservation doit être aujourd'hui ou dans le futur."
     )]
-    #[Groups(["getReservations"])]
+    #[Groups(['getReservationsEspaces'])]
     private \DateTime $dateReservation;
-    
+
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     #[Assert\NotNull(message: "L'heure de début ne doit pas être vide.")]
     #[Assert\LessThan(
         propertyPath: 'heureFin',
         message: "L'heure de début doit être inférieure à l'heure de fin."
     )]
-    #[Groups(["getReservations"])]
+    #[Groups(['getReservationsEspaces'])]
     private \DateTime $heureDebut;
-    
+
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     #[Assert\NotNull(message: "L'heure de fin ne doit pas être vide.")]
     #[Assert\GreaterThan(
         propertyPath: 'heureDebut',
         message: "L'heure de fin doit être supérieure à l'heure de début."
     )]
-    #[Groups(["getReservations"])]
+    #[Groups(['getReservationsEspaces'])]
     private \DateTime $heureFin;
-    
-    #[ORM\ManyToOne(inversedBy: 'reservationEquipements')]
+
+    #[ORM\ManyToOne(inversedBy: 'reservationEspaces')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: "Le statut ne doit pas être null.")]
-    #[Groups(["getReservations"])]
+    #[Groups(['getReservationsEspaces'])]
     private ?Statut $Statut = null;
+
+    #[ORM\ManyToOne(inversedBy: 'reservationEspaces')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "L'utilisateur ne doit pas être null.")]
+    #[Groups(['getReservationsEspaces'])]
+    private ?User $User = null;
+
+    #[ORM\ManyToOne(inversedBy: 'reservationEspaces')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "L'espace de travail ne doit pas être null.")]
+    #[Groups(['getReservationsEspaces'])]
+    private ?EspaceTravail $EspaceTravail = null;
 
     public function __construct()
     {
@@ -171,7 +170,7 @@ class ReservationEquipement
         return $this->Statut;
     }
 
-    public function setStatut(Statut $Statut): static
+    public function setStatut(?Statut $Statut): static
     {
         $this->Statut = $Statut;
 
@@ -183,34 +182,36 @@ class ReservationEquipement
         return $this->User;
     }
 
-    public function setUser(User $User): static
+    public function setUser(?User $User): static
     {
         $this->User = $User;
 
         return $this;
     }
 
-    public function getEquipement(): ?Equipement
+    public function getEspaceTravail(): ?EspaceTravail
     {
-        return $this->Equipement;
+        return $this->EspaceTravail;
     }
 
-    public function setEquipement(Equipement $Equipement): static
+    public function setEspaceTravail(?EspaceTravail $EspaceTravail): static
     {
-        $this->Equipement = $Equipement;
+        $this->EspaceTravail = $EspaceTravail;
 
         return $this;
     }
+
     /**
      * @return array<string, string>
      */
-    #[Groups(['getReservations'])]
+    #[Groups(['getReservationsEspaces'])]
     public function getLinks(): array
     {
         return [
-            'self' => "/api/reservation_equipements/".$this->id,
-            'update' => "/api/reservation_equipements/".$this->id,
-            'delete' => "/api/reservation_equipements/".$this->id,
+            'self' => "/api/reservation_espaces/".$this->id,
+            'update' => "/api/reservation_espaces/".$this->id,
+            'delete' => "/api/reservation_espaces/".$this->id,
         ];
     }
 }
+

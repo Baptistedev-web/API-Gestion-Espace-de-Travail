@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Entity;
 
 use App\Entity\EspaceTravail;
+use App\Entity\ReservationEspace;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -60,4 +61,29 @@ class EspaceTravailTest extends TestCase
 
         $this->assertSame($expectedLinks, $espaceTravail->getLinks());
     }
+
+    public function testAddAndRemoveReservationEspace(): void
+    {
+        $espaceTravail = new EspaceTravail('Nom', 'Description', 10);
+        $reservation = $this->createMock(ReservationEspace::class);
+
+        $reservation->expects($this->once())
+            ->method('setEspaceTravail')
+            ->with($espaceTravail);
+
+        $espaceTravail->addReservationEspace($reservation);
+
+        $this->assertCount(1, $espaceTravail->getReservationEspaces());
+        $this->assertTrue($espaceTravail->getReservationEspaces()->contains($reservation));
+
+        $reservation->expects($this->once())
+            ->method('getEspaceTravail')
+            ->willReturn($espaceTravail);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Impossible de supprimer l'espace de travail d'une réservation.");
+
+        $espaceTravail->removeReservationEspace($reservation);
+    }
 }
+

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Entity;
 
 use App\Entity\ReservationEquipement;
+use App\Entity\ReservationEspace;
 use App\Entity\Statut;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -57,6 +58,32 @@ class StatutTest extends TestCase
         $this->assertFalse($statut->getReservationEquipements()->contains($reservationEquipement));
     }
 
+    public function testAddRemoveReservationEspace(): void
+    {
+        $statut = new Statut();
+        $reservationEspace = $this->createMock(ReservationEspace::class);
+
+        $reservationEspace->expects($this->once())
+            ->method('setStatut')
+            ->with($statut);
+
+        $statut->addReservationEspace($reservationEspace);
+
+        $this->assertCount(1, $statut->getReservationEspaces());
+        $this->assertTrue($statut->getReservationEspaces()->contains($reservationEspace));
+
+        $reservationEspace->expects($this->once())
+            ->method('getStatut')
+            ->willReturn($statut);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Impossible de supprimer le statut d'une réservation.");
+
+        $statut->removeReservationEspace($reservationEspace);
+
+        $this->assertCount(0, $statut->getReservationEspaces());
+    }
+
     public function testGetLinks(): void
     {
         $statut = new Statut();
@@ -86,3 +113,4 @@ class StatutTest extends TestCase
         $statut->removeReservationEquipement($reservationEquipement);
     }
 }
+

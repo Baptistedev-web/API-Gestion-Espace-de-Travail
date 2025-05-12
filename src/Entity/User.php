@@ -72,7 +72,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getUsers", "getReservations"])]
+    #[Groups(["getUsers", "getReservations","getReservationsEspaces"])]
     private int $id = 0;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
@@ -81,7 +81,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         mode: 'strict',
         message: "L'adresse e-mail {{ value }} n'est pas valide."
     )]
-    #[Groups(["getUsers", "getReservations"])]
+    #[Groups(["getUsers", "getReservations","getReservationsEspaces"])]
     private string $email = '';
     
     /**
@@ -128,7 +128,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
         message: "Le nom de famille ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets."
     )]
-    #[Groups(["getUsers", "getReservations"])]
+    #[Groups(["getUsers", "getReservations","getReservationsEspaces"])]
     private string $nom = '';
     
     #[ORM\Column(length: 100)]
@@ -143,7 +143,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
         message: "Le prénom ne doit contenir que des lettres avec ou sans accents, des espaces ou des tirets."
     )]
-    #[Groups(["getUsers", "getReservations"])]
+    #[Groups(["getUsers", "getReservations","getReservationsEspaces"])]
     private string $prenom = '';
 
     /**
@@ -153,9 +153,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(["getUsers"])]
     private Collection $reservationEquipements;
 
+    /**
+     * @var Collection<int, ReservationEspace>
+     */
+    #[ORM\OneToMany(targetEntity: ReservationEspace::class, mappedBy: 'User', orphanRemoval: true)]
+    #[Groups(["getUsers"])]
+    private Collection $reservationEspaces;
+
     public function __construct()
     {
         $this->reservationEquipements = new ArrayCollection();
+        $this->reservationEspaces = new ArrayCollection();
     }
 
     public function getId(): int
@@ -321,4 +329,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, ReservationEspace>
+     */
+    public function getReservationEspaces(): Collection
+    {
+        return $this->reservationEspaces;
+    }
+
+    public function addReservationEspace(ReservationEspace $reservationEspace): static
+    {
+        if (!$this->reservationEspaces->contains($reservationEspace)) {
+            $this->reservationEspaces->add($reservationEspace);
+            $reservationEspace->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservationEspace(ReservationEspace $reservationEspace): static
+    {
+        if ($this->reservationEspaces->removeElement($reservationEspace)) {
+            // set the owning side to null (unless already changed)
+            if ($reservationEspace->getUser() === $this) {
+                throw new \LogicException("Impossible de supprimer l'utilisateur d'une réservation.");
+            }
+        }
+
+        return $this;
+    }
 }
+
