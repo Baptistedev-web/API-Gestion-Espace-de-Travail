@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\UniqueConstraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: ReservationEspaceRepository::class)]
 #[ORM\UniqueConstraint(
@@ -201,6 +202,33 @@ class ReservationEspace
         return $this;
     }
 
+    #[Assert\Callback]
+    public function validateNoOverlap(ExecutionContextInterface $context): void
+    {
+        if ($this->EspaceTravail === null) {
+            return;
+        }
+        $reservations = $this->EspaceTravail->getReservationEspaces();
+        foreach ($reservations as $reservation) {
+            if ($reservation === $this) {
+                continue;
+            }
+            if ($reservation->getDateReservation()->format('Y-m-d') !== $this->dateReservation->format('Y-m-d')) {
+                continue;
+            }
+            // Chevauchement horaire
+            if (
+                ($this->heureDebut < $reservation->getHeureFin()) &&
+                ($this->heureFin > $reservation->getHeureDebut())
+            ) {
+                $context->buildViolation("Il existe déjà une réservation pour cet espace de travail sur ce créneau horaire.")
+                    ->atPath('heureDebut')
+                    ->addViolation();
+                break;
+            }
+        }
+    }
+
     /**
      * @return array<string, string>
      */
@@ -214,4 +242,3 @@ class ReservationEspace
         ];
     }
 }
-

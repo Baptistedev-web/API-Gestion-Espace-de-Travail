@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\UniqueConstraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: ReservationEquipementRepository::class)]
 #[ORM\UniqueConstraint(
@@ -195,7 +196,7 @@ class ReservationEquipement
         return $this->Equipement;
     }
 
-    public function setEquipement(Equipement $Equipement): static
+    public function setEquipement(?Equipement $Equipement): static
     {
         $this->Equipement = $Equipement;
 
@@ -212,5 +213,32 @@ class ReservationEquipement
             'update' => "/api/reservation_equipements/".$this->id,
             'delete' => "/api/reservation_equipements/".$this->id,
         ];
+    }
+
+    #[Assert\Callback]
+    public function validateNoOverlap(ExecutionContextInterface $context): void
+    {
+        if ($this->Equipement === null) {
+            return;
+        }
+        $reservations = $this->Equipement->getReservationEquipements();
+        foreach ($reservations as $reservation) {
+            if ($reservation === $this) {
+                continue;
+            }
+            if ($reservation->getDateReservation()->format('Y-m-d') !== $this->dateReservation->format('Y-m-d')) {
+                continue;
+            }
+            // Chevauchement horaire
+            if (
+                ($this->heureDebut < $reservation->getHeureFin()) &&
+                ($this->heureFin > $reservation->getHeureDebut())
+            ) {
+                $context->buildViolation("Il existe déjà une réservation pour cet équipement sur ce créneau horaire.")
+                    ->atPath('heureDebut')
+                    ->addViolation();
+                break;
+            }
+        }
     }
 }

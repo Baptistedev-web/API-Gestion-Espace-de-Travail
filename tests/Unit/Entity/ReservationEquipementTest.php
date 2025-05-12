@@ -8,6 +8,7 @@ use App\Entity\ReservationEquipement;
 use App\Entity\Statut;
 use App\Entity\User;
 use App\Entity\Equipement;
+use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -98,5 +99,104 @@ class ReservationEquipementTest extends TestCase
         ];
 
         $this->assertSame($expectedLinks, $reservation->getLinks());
+    }
+
+    public function testValidateNoOverlapNoConflict(): void
+    {
+        $equipement = $this->createMock(Equipement::class);
+        $reservation = new ReservationEquipement();
+        $reservation->setEquipement($equipement);
+        $reservation->setDateReservation(new \DateTime('2024-06-01'));
+        $reservation->setHeureDebut(new \DateTime('10:00'));
+        $reservation->setHeureFin(new \DateTime('12:00'));
+
+        // Simule aucune réservation existante
+        $equipement->method('getReservationEquipements')->willReturn(new ArrayCollection());
+
+        $context = $this->createMock(\Symfony\Component\Validator\Context\ExecutionContextInterface::class);
+        $context->expects($this->never())->method('buildViolation');
+
+        $reservation->validateNoOverlap($context);
+    }
+
+    public function testValidateNoOverlapWithConflict(): void
+    {
+        $equipement = $this->createMock(Equipement::class);
+        $reservation = new ReservationEquipement();
+        $reservation->setEquipement($equipement);
+        $reservation->setDateReservation(new \DateTime('2024-06-01'));
+        $reservation->setHeureDebut(new \DateTime('10:00'));
+        $reservation->setHeureFin(new \DateTime('12:00'));
+
+        $other = new ReservationEquipement();
+        $other->setEquipement($equipement);
+        $other->setDateReservation(new \DateTime('2024-06-01'));
+        $other->setHeureDebut(new \DateTime('11:00'));
+        $other->setHeureFin(new \DateTime('13:00'));
+
+        $equipement->method('getReservationEquipements')->willReturn(new ArrayCollection([$other]));
+
+        $violationBuilder = $this->getMockBuilder(\Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $violationBuilder->expects($this->once())->method('atPath')->with('heureDebut')->willReturnSelf();
+        $violationBuilder->expects($this->once())->method('addViolation');
+
+        $context = $this->createMock(\Symfony\Component\Validator\Context\ExecutionContextInterface::class);
+        $context->expects($this->once())->method('buildViolation')->willReturn($violationBuilder);
+
+        $reservation->validateNoOverlap($context);
+    }
+
+    public function testValidateNoOverlapWithNullEquipement(): void
+    {
+        $reservation = new ReservationEquipement();
+        $reservation->setEquipement(null);
+
+        $context = $this->createMock(\Symfony\Component\Validator\Context\ExecutionContextInterface::class);
+        $context->expects($this->never())->method('buildViolation');
+
+        $reservation->validateNoOverlap($context);
+    }
+
+    public function testValidateNoOverlapWithSelfReservation(): void
+    {
+        $equipement = $this->createMock(Equipement::class);
+        $reservation = new ReservationEquipement();
+        $reservation->setEquipement($equipement);
+        $reservation->setDateReservation(new \DateTime('2024-06-01'));
+        $reservation->setHeureDebut(new \DateTime('10:00'));
+        $reservation->setHeureFin(new \DateTime('12:00'));
+
+        // La collection contient la réservation elle-même
+        $equipement->method('getReservationEquipements')->willReturn(new \Doctrine\Common\Collections\ArrayCollection([$reservation]));
+
+        $context = $this->createMock(\Symfony\Component\Validator\Context\ExecutionContextInterface::class);
+        $context->expects($this->never())->method('buildViolation');
+
+        $reservation->validateNoOverlap($context);
+    }
+
+    public function testValidateNoOverlapWithDifferentDate(): void
+    {
+        $equipement = $this->createMock(Equipement::class);
+        $reservation = new ReservationEquipement();
+        $reservation->setEquipement($equipement);
+        $reservation->setDateReservation(new \DateTime('2024-06-01'));
+        $reservation->setHeureDebut(new \DateTime('10:00'));
+        $reservation->setHeureFin(new \DateTime('12:00'));
+
+        $other = new ReservationEquipement();
+        $other->setEquipement($equipement);
+        $other->setDateReservation(new \DateTime('2024-06-02')); // Date différente
+        $other->setHeureDebut(new \DateTime('11:00'));
+        $other->setHeureFin(new \DateTime('13:00'));
+
+        $equipement->method('getReservationEquipements')->willReturn(new \Doctrine\Common\Collections\ArrayCollection([$other]));
+
+        $context = $this->createMock(\Symfony\Component\Validator\Context\ExecutionContextInterface::class);
+        $context->expects($this->never())->method('buildViolation');
+
+        $reservation->validateNoOverlap($context);
     }
 }
