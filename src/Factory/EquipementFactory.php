@@ -10,7 +10,7 @@ use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 /**
  * @extends PersistentProxyObjectFactory<Equipement>
  */
-final class EquipementFactory extends PersistentProxyObjectFactory
+class EquipementFactory extends PersistentProxyObjectFactory
 {
     /**
      * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
@@ -55,15 +55,14 @@ final class EquipementFactory extends PersistentProxyObjectFactory
     /**
      * Génère un nom réaliste pour un équipement en fonction de la catégorie.
      *
+     * @param string|null $category
      * @return string
      */
-    private static function generateRealisticName(): string
+    private static function generateRealisticName(?string $category = null): string
     {
         $faker = self::faker();
-        $category = $faker->randomElement(['Bureau', 'Salle de réunion', 'Espace de collaboration']);
-
-        if (!is_string($category)) {
-            $category = 'Équipement générique';
+        if ($category === null) {
+            $category = $faker->randomElement(['Bureau', 'Salle de réunion', 'Espace de collaboration']);
         }
 
         $name = match ($category) {
@@ -74,6 +73,20 @@ final class EquipementFactory extends PersistentProxyObjectFactory
         };
 
         return is_string($name) ? $name : 'Équipement générique';
+    }
+
+    /**
+     * Permet de tester la logique du match sans dépendre de Foundry.
+     * @internal uniquement pour les tests unitaires
+     */
+    protected static function matchCategoryName(string $category): string
+    {
+        return match ($category) {
+            'Bureau' => 'bureau-test',
+            'Salle de réunion' => 'reunion-test',
+            'Espace de collaboration' => 'collab-test',
+            default => 'Équipement générique',
+        };
     }
 
     /**
@@ -106,3 +119,4 @@ final class EquipementFactory extends PersistentProxyObjectFactory
         };
     }
 }
+
