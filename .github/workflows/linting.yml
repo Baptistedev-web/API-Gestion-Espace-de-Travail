@@ -13,45 +13,18 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
 
-    services:
-      db:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: Symfony_EspaceTravailAPI_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
-    env:
-      APP_ENV: test
-      APP_SECRET: $ecretf0rt3st
-      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI
-      JWT_SECRET_KEY: config/jwt/private.pem
-      JWT_PUBLIC_KEY: config/jwt/public.pem
-      JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.4
-          tools: composer
+      - name: Set up Docker Compose
+        run: docker compose up -d
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: docker compose exec -T php composer install --prefer-dist --no-progress --no-suggest
 
       - name: Create database
-        env:
-          APP_ENV: test
-        run: php bin/console doctrine:database:create --if-not-exists --env=test
+        run: docker compose exec -T php php bin/console doctrine:database:create --if-not-exists --env=test
 
       - name: Check for migrations
         run: |
@@ -61,9 +34,7 @@ jobs:
           fi
 
       - name: Run database migrations
-        env:
-          APP_ENV: test
-        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+        run: docker compose exec -T php php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --level=max src/
+        run: docker compose exec -T php vendor/bin/phpstan analyse --level=max src/

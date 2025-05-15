@@ -1,0 +1,66 @@
+services:
+  php:
+    container_name: espace_travail_php
+    build:
+      context: ./.docker/PHP
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - APP_ENV=dev
+      - APP_ENV=test
+    depends_on:
+      - mysql
+    networks:
+      - espace_travail_api
+
+  nginx:
+    container_name: espace_travail_nginx
+    image: nginx:latest
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./:/var/www/html
+      - ./.docker/NGINX/default.conf:/etc/nginx/conf.d/default.conf
+      - ./.docker/NGINX/ssl:/etc/nginx/ssl
+    depends_on:
+      - php
+    networks:
+      - espace_travail_api
+
+  mysql:
+    container_name: espace_travail_mysql
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - espace_travail_api
+
+  PhpMyAdmin:
+    container_name: espace_travail_phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      espace_travail_api:
+        aliases:
+          - mysql
+
+volumes:
+    mysql_data:
+        driver: local
+
+networks:
+      espace_travail_api:

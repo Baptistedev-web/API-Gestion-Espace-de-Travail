@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250510161113 extends AbstractMigration
+final class Version20250513163657 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -34,6 +34,9 @@ final class Version20250510161113 extends AbstractMigration
         SQL);
         $this->addSql(<<<'SQL'
             CREATE TABLE reservation_equipement (id INT AUTO_INCREMENT NOT NULL, user_id INT NOT NULL, equipement_id INT NOT NULL, statut_id INT NOT NULL, date_reservation DATE NOT NULL, heure_debut TIME NOT NULL, heure_fin TIME NOT NULL, INDEX IDX_D81E0F47A76ED395 (user_id), INDEX IDX_D81E0F47806F0F5C (equipement_id), INDEX IDX_D81E0F47F6203804 (statut_id), UNIQUE INDEX reservation_unique (user_id, equipement_id, date_reservation, heure_debut), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
+        SQL);
+        $this->addSql(<<<'SQL'
+            CREATE TABLE reservation_espace (id INT AUTO_INCREMENT NOT NULL, statut_id INT NOT NULL, user_id INT NOT NULL, espace_travail_id INT NOT NULL, date_reservation DATE NOT NULL, heure_debut TIME NOT NULL, heure_fin TIME NOT NULL, INDEX IDX_4E5A40F6F6203804 (statut_id), INDEX IDX_4E5A40F6A76ED395 (user_id), INDEX IDX_4E5A40F64A7E6B92 (espace_travail_id), UNIQUE INDEX reservation_espace_unique (user_id, espace_travail_id, date_reservation, heure_debut), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
         SQL);
         $this->addSql(<<<'SQL'
             CREATE TABLE salle_reunion (id INT NOT NULL, equipement_visio_conference TINYINT(1) NOT NULL, reservation_obligatoire TINYINT(1) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
@@ -72,6 +75,15 @@ final class Version20250510161113 extends AbstractMigration
             ALTER TABLE reservation_equipement ADD CONSTRAINT FK_D81E0F47F6203804 FOREIGN KEY (statut_id) REFERENCES statut (id)
         SQL);
         $this->addSql(<<<'SQL'
+            ALTER TABLE reservation_espace ADD CONSTRAINT FK_4E5A40F6F6203804 FOREIGN KEY (statut_id) REFERENCES statut (id)
+        SQL);
+        $this->addSql(<<<'SQL'
+            ALTER TABLE reservation_espace ADD CONSTRAINT FK_4E5A40F6A76ED395 FOREIGN KEY (user_id) REFERENCES user (id)
+        SQL);
+        $this->addSql(<<<'SQL'
+            ALTER TABLE reservation_espace ADD CONSTRAINT FK_4E5A40F64A7E6B92 FOREIGN KEY (espace_travail_id) REFERENCES espace_travail (id)
+        SQL);
+        $this->addSql(<<<'SQL'
             ALTER TABLE salle_reunion ADD CONSTRAINT FK_7636C8D3BF396750 FOREIGN KEY (id) REFERENCES espace_travail (id) ON DELETE CASCADE
         SQL);
     }
@@ -101,6 +113,15 @@ final class Version20250510161113 extends AbstractMigration
             ALTER TABLE reservation_equipement DROP FOREIGN KEY FK_D81E0F47F6203804
         SQL);
         $this->addSql(<<<'SQL'
+            ALTER TABLE reservation_espace DROP FOREIGN KEY FK_4E5A40F6F6203804
+        SQL);
+        $this->addSql(<<<'SQL'
+            ALTER TABLE reservation_espace DROP FOREIGN KEY FK_4E5A40F6A76ED395
+        SQL);
+        $this->addSql(<<<'SQL'
+            ALTER TABLE reservation_espace DROP FOREIGN KEY FK_4E5A40F64A7E6B92
+        SQL);
+        $this->addSql(<<<'SQL'
             ALTER TABLE salle_reunion DROP FOREIGN KEY FK_7636C8D3BF396750
         SQL);
         $this->addSql(<<<'SQL'
@@ -117,6 +138,9 @@ final class Version20250510161113 extends AbstractMigration
         SQL);
         $this->addSql(<<<'SQL'
             DROP TABLE reservation_equipement
+        SQL);
+        $this->addSql(<<<'SQL'
+            DROP TABLE reservation_espace
         SQL);
         $this->addSql(<<<'SQL'
             DROP TABLE salle_reunion

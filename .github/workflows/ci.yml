@@ -13,57 +13,27 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
-    services:
-      db:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: Symfony_EspaceTravailAPI_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-    env:
-      APP_ENV: test
-      APP_SECRET: $ecretf0rt3st
-      DATABASE_URL: mysql://root:root@127.0.0.1:3306/Symfony_EspaceTravailAPI
-      JWT_SECRET_KEY: config/jwt/private.pem
-      JWT_PUBLIC_KEY: config/jwt/public.pem
-      JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
-
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.4
-          extensions: mbstring, intl, pdo_mysql
-          tools: composer, symfony
+      - name: Set up Docker Compose
+        run: docker compose up -d
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: docker compose exec -T php composer install --prefer-dist --no-progress --no-suggest
 
       - name: Generate JWT keys
         run: |
-          mkdir -p config/jwt
-          openssl genrsa -aes256 -passout pass:${{ secrets.JWT_PASSPHRASE }} -out config/jwt/private.pem 4096
-          openssl rsa -pubout -in config/jwt/private.pem -passin pass:${{ secrets.JWT_PASSPHRASE }} -out config/jwt/public.pem
+          docker compose exec -T php mkdir -p config/jwt
+          docker compose exec -T php openssl genrsa -aes256 -passout pass:${{ secrets.JWT_PASSPHRASE }} -out config/jwt/private.pem 4096
+          docker compose exec -T php openssl rsa -pubout -in config/jwt/private.pem -passin pass:${{ secrets.JWT_PASSPHRASE }} -out config/jwt/public.pem
 
       - name: Clear Symfony cache
-        env:
-          APP_ENV: test
-        run: php bin/console cache:clear --env=test
+        run: docker compose exec -T php php bin/console cache:clear --env=test
 
       - name: Create database
-        env:
-          APP_ENV: test
-        run: php bin/console doctrine:database:create --if-not-exists --env=test
+        run: docker compose exec -T php php bin/console doctrine:database:create --if-not-exists --env=test
 
       - name: Check for migrations
         run: |
@@ -73,21 +43,15 @@ jobs:
           fi
 
       - name: Run database migrations
-        env:
-          APP_ENV: test
-        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+        run: docker compose exec -T php php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
       - name: Load fixtures
-        env:
-          APP_ENV: test
-        run: php bin/console doctrine:fixtures:load --no-interaction --env=test
+        run: docker compose exec -T php php bin/console doctrine:fixtures:load --no-interaction --env=test
 
       - name: Run tests with coverage
-        env:
-          APP_ENV: test
         run: |
-          mkdir -p var/coverage
-          php bin/phpunit --coverage-clover var/coverage/clover.xml
+          docker compose exec -T php mkdir -p var/coverage
+          docker compose exec -T php php bin/phpunit --coverage-clover var/coverage/clover.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
