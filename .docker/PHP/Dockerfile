@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev libonig-dev curl openssl && \
     docker-php-ext-install pdo pdo_mysql zip intl xml gd
 
-# Installe Composer
+# Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copie le code source (optionnel, sinon bind-mount)
-# COPY . /var/www/html
+# Installation de Xdebug pour la couverture de code
+RUN pecl install xdebug && docker-php-ext-enable xdebug
 
-# ...autres instructions si besoin...
+# Configuration Xdebug
